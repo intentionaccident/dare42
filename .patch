@@ -1,0 +1,5 @@
+sprouts:
+  - dist/bundle.js
+grafts:
+  public:
+    dist: dare
