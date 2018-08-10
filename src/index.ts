@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import * as $ from 'jquery';
-import * as styles from '../styles/main.sass';
+import $ from 'jquery';
+import styles from '../styles/main.sass';
 
 class Game{
 	body: JQuery<HTMLElement>;
@@ -13,7 +13,7 @@ class Game{
 	constructor(){}
 
 	public init(){
-		this.body = $('<div class="body"/>');
+		this.body = $(`<div class="${styles.body}"/>`);
 		this.canvas = $('<div class="canvas"/>');
 		this.ui = $('<div class="ui"/>');
 		this.body.append(this.canvas, this.ui);

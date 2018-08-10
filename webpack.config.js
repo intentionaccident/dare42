@@ -29,6 +29,7 @@ module.exports = {
             loader: "typings-for-css-modules-loader",
             options: {
                 sourceMap: true,
+                namedExport: true,
                 modules: true,
                 importLoaders: 1,
                 // url: false
