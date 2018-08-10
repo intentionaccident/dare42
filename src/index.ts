@@ -1,6 +1,42 @@
 import * as THREE from 'three';
 import $ from 'jquery';
 import styles from '../styles/main.sass';
+import { Vector2 } from 'three';
+
+function indexHash(coord : Vector2): string {
+	return `x${coord.x | 0}y${coord.y | 0}`;
+}
+
+class Hex {
+	material: THREE.MeshBasicMaterial;
+	geometry: THREE.CircleGeometry;
+	mesh: THREE.Mesh;
+	constructor(public coord: Vector2){
+		this.geometry = new THREE.CircleGeometry( 1, 6 );
+		this.material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+		this.mesh = new THREE.Mesh( this.geometry, this.material );
+		this.mesh.rotateZ(Math.PI / 6);
+	}
+}
+
+class Field {
+	group: THREE.Group;
+	private hexes = {};
+	constructor(){
+		this.group = new THREE.Group();
+	}
+	
+	private createHex(coord: Vector2): Hex {
+		const hex = new Hex(coord);
+		this.hexes[indexHash(hex.coord)] = hex;
+		this.group.add(hex.mesh);
+		return hex;
+	}
+
+	public generate(area?: THREE.Box2){
+		this.createHex(new Vector2(0, 0));
+	}
+}
 
 class Game{
 	body: JQuery<HTMLElement>;
@@ -10,6 +46,7 @@ class Game{
 	scene: THREE.Scene;
 	renderer: THREE.WebGLRenderer;
 	cube: THREE.Mesh;
+	field: Field;
 	constructor(){}
 
 	public init(){
@@ -30,14 +67,16 @@ class Game{
 		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
 		var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 		this.cube = new THREE.Mesh( geometry, material );
-		this.scene.add( this.cube );
+
+		this.field = new Field();
+		this.field.generate();
+		this.scene.add( this.field.group );
+		
 	}
 
 	private animate(){
 		requestAnimationFrame(() => this.animate());
-		
-		this.cube.rotation.x += 0.01;
-		this.cube.rotation.y += 0.01;
+
 		this.renderer.render(this.scene, this.camera );
 	}
 
@@ -51,4 +90,3 @@ $(() => {
 	game.init();
 	game.start();
 });
-
