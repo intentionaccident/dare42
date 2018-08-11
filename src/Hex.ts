@@ -6,7 +6,8 @@ import { Field } from "./Field";
 
 export enum Building{
 	None,
-	Spacer
+	Spacer,
+	Vacuum
 }
 
 export class Hex implements EventReceptor{
@@ -14,6 +15,7 @@ export class Hex implements EventReceptor{
 	public static readonly gapPercent: number = 0.9;
 	public static readonly size: number = Math.sqrt(3 * (Hex.radius * Hex.radius) / 4);
 	public static readonly circumscribedRadius: number = Math.sqrt(3) / 3 * Hex.radius * Hex.gapPercent;
+	private static readonly buildingPrice = [0, 20, 20];
 
 	public static readonly hover: Mesh = new Mesh(
 		new CircleGeometry(Hex.radius * Hex.gapPercent, 6),
@@ -30,7 +32,7 @@ export class Hex implements EventReceptor{
 	space: number;
 	group: THREE.Group;
 	fractal: THREE.Group;
-	building: Building = Building.None;
+	public building: Building = Building.None;
 	constructor(public coord: Vector2, private _solidity: number, private field: Field) {
 		this.space = Math.random() * 200 | 0;
 		this.material = new MeshBasicMaterial({
@@ -114,16 +116,36 @@ export class Hex implements EventReceptor{
 	public get color(): Color {
 		if (this.building === Building.Spacer)
 			return new Color(0.8, 0.1, 0.8);
+		else if (this.building === Building.Vacuum)
+			return new Color(0.2, 0.5, 0.2);
 		return new Color(this.solidity, this.solidity, this.solidity);
 	}
 
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.group.add(Hex.hover);
-		game.ui.textBlock.text(`Space: ${this.space}; Solidity: ${this.solidity * 100 | 0}%`)
+		game.ui.textBlock.text(`Space: ${this.space}; Solidity: ${this.solidity * 100 | 0}%; Building: ${Building[this.building]}`)
 	}
 
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.group.remove(Hex.hover);
+	}
+
+	onClick(event: JQuery.Event<HTMLCanvasElement, null>){
+		if(event.ctrlKey){
+			this.tryBuild(Building.Spacer);
+		}else{
+			this.tryBuild(Building.Vacuum);
+		}
+	}
+
+	private tryBuild(building: Building): boolean {
+		if (this.building !== Building.None)
+			return false;
+		if (game.space < Hex.buildingPrice[building])
+			return false;
+		game.space -= Hex.buildingPrice[building];
+		this.building = building;
+		return true;
 	}
 
 	public get adjacents() : Array<Hex>{

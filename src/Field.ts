@@ -1,6 +1,7 @@
 import { Hex, Building } from './Hex';
 import { Vector2, Group, Raycaster } from 'three';
 import { flatten, game } from './index';
+import { stats } from '../styles/main.sass';
 
 export interface HexMap{
 	[hash: string]: Hex;
@@ -96,10 +97,10 @@ export class Field {
 	}
 
 	tick(delta: number): any {
-		const spacers = [];
+		const buildings = [];
 		for(const hex of this.hexArray){
-			if (hex.building === Building.Spacer)
-				spacers.push(hex);
+			if (hex.building !== Building.None)
+				buildings.push(hex);
 
 			if (hex.solidity > 0.5)
 				hex.solidity -= 0.05 * delta;
@@ -107,14 +108,24 @@ export class Field {
 				hex.solidity -= 0.01 * delta;
 		}
 
-		for(const spacer of spacers){
-			if (game.space >= 5)
-				game.space -= 5;
-			else
-				break;
-			for (const hex of this.adjacents(spacer, 3, false)){
-				hex.solidity += 0.1 * delta;
+		for(const building of buildings){
+			switch(building.building){
+				case Building.Spacer: {
+					if (game.space >= 5)
+						game.space -= 5;
+					else
+						return;
+					for (const hex of this.adjacents(building, 3, false)){
+						hex.solidity += 0.1 * delta;
+					}
+					break;
+				} case Building.Vacuum: {
+					game.space += Math.min(5, building.space);
+					building.space -= Math.min(5, building.space);
+					break;
+				}
 			}
+			
 		}
 	}
 }

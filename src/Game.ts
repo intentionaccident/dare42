@@ -9,7 +9,7 @@ import { canvas } from '../styles/main.sass';
 export interface EventReceptor{
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>);
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>);
-	// onClick(event: JQuery.Event<HTMLCanvasElement, null>);
+	onClick(event: JQuery.Event<HTMLCanvasElement, null>);
 }
 
 export class Game {
@@ -31,6 +31,7 @@ export class Game {
 	constructor() { }
 	public init() {
 		this.body = $(`<div class="${styles.body}"/>`);
+		$('body').on('contextmenu', 'canvas', function(e){ return false; });
 		this.canvas = $(`<div class="${styles.canvas}"/>`);
 		this.body.append(this.canvas);
 		this.ui = new UI(this.body);
@@ -45,6 +46,7 @@ export class Game {
 		this.raycaster = new Raycaster();
 		this.rendererElement = $(this.renderer.domElement);
 		this.rendererElement.mousemove(e => this.onMouseMove(e));
+		this.rendererElement.click(e => this.onClick(e));
 		var geometry = new BoxGeometry(1, 1, 1);
 		var material = new MeshBasicMaterial({ color: 0x00ff00 });
 		this.cube = new Mesh(geometry, material);
@@ -55,10 +57,13 @@ export class Game {
 
 		this.ui.spaceField.text(this.space);
 	}
+
+	private mouse(event: JQuery.Event<HTMLCanvasElement, null>): Vector2 {
+		return new Vector2(event.offsetX / this.canvasSize.x * 2 - 1, event.offsetY / this.canvasSize.y * -2 + 1);
+	}
 	
 	onMouseMove(event: JQuery.Event<HTMLCanvasElement, null>): any {
-		const mouse = new Vector2(event.offsetX / this.canvasSize.x * 2 - 1, event.offsetY / this.canvasSize.y * -2 + 1);
-		this.raycaster.setFromCamera(mouse, this.camera);
+		this.raycaster.setFromCamera(this.mouse(event), this.camera);
 
 		const eventReceptor = this.field.smash(this.raycaster);
 		if (this.hoverItem){
@@ -72,6 +77,15 @@ export class Game {
 
 		if (this.hoverItem)
 			this.hoverItem.onMouseEnter(event);
+	}
+
+	
+	onClick(event: JQuery.Event<HTMLCanvasElement, null>): any {
+		this.raycaster.setFromCamera(this.mouse(event), this.camera);
+
+		const eventReceptor = this.field.smash(this.raycaster);
+		if(eventReceptor)
+			eventReceptor.onClick(event);
 	}
 	
 	private animate() {
