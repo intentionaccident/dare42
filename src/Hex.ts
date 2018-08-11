@@ -1,6 +1,7 @@
 import { Vector2, MeshBasicMaterial, Group, CircleGeometry, Mesh, Object3D, Color } from "three";
+import { EventReceptor } from './Game';
 
-export class Hex {
+export class Hex implements EventReceptor{
 	public static readonly radius: number = 0.3;
 	public static readonly gapPercent: number = 0.9;
 	public static readonly size: number = Math.sqrt(3 * (Hex.radius * Hex.radius) / 4);
@@ -24,7 +25,8 @@ export class Hex {
 		this.group.rotateZ(Math.PI / 6);
 		this.geometry = new CircleGeometry(Hex.radius * Hex.gapPercent, 6);
 		this.mesh = new Mesh(this.geometry, this.material);
-		this.group.add(this.mesh);
+        this.group.add(this.mesh);
+        this.group.userData.eventReceptor = this;
 		this.fractalise();
 	}
 	public update() {
@@ -77,5 +79,14 @@ export class Hex {
 	}
 	public get color(): Color {
 		return new Color(this.solidity, this.solidity, this.solidity);
-	}
+    }
+    
+    
+    onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
+        this.material.color = new Color(0x0000ff);
+    }
+
+    onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>) {
+        this.material.color = this.color;
+    }
 }

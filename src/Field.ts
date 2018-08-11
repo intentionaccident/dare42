@@ -1,11 +1,19 @@
 import { Hex } from './Hex';
-import { Vector2, Group } from 'three';
+import { Vector2, Group, Raycaster } from 'three';
+import { flatten } from './index';
 
 export interface HexMap{
 	[hash: string]: Hex;
 }
 
 export class Field {
+	smash(raycaster: Raycaster): Hex | void{
+		const intersect = raycaster.intersectObjects(flatten(this.hexArray.map(h => h.mesh)))[0];
+		if (!intersect)
+			return;
+		return intersect.object.parent.userData.eventReceptor as Hex;
+	}
+
 	group: THREE.Group;
 	public hexes: HexMap = {};
 	constructor() {
