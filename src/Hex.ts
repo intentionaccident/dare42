@@ -34,7 +34,28 @@ export class Hex implements EventReceptor{
 	space: number;
 	group: THREE.Group;
 	fractal: THREE.Group;
-	public building: Building = Building.None;
+
+	private _building: Building = Building.None;
+	public get building(): Building {
+		return this._building;
+	}
+
+	public set building(value: Building) {
+		if (this._building === value)
+			return;
+
+		if (this._building === Building.Spacer){
+			this.field.modifySpacer(this, false);
+		}
+
+		this._building = value;
+
+		if (this._building === Building.Spacer){
+			this.field.modifySpacer(this, true);
+		}
+	}
+
+
 	fractalLevel: number;
 	constructor(public coord: Vector2, private _solidity: number, private field: Field) {
 		this.space = Math.random() * 300 | 0;

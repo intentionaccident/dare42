@@ -13,6 +13,14 @@ export function flatten(arr, result = []) {
 	return result;
 };
 
+export function tryRemove<T>(array: Array<T>, item: T): boolean{
+	const index = array.indexOf(item);
+	if (index < 0)
+		return false;
+	array.splice(index, 1);
+	return true;
+}
+
 export var game : Game;
 
 $(() => {

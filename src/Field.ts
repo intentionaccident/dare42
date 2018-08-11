@@ -1,6 +1,6 @@
 import { Hex, Building } from './Hex';
 import { Vector2, Group, Raycaster } from 'three';
-import { flatten, game } from './index';
+import { flatten, game, tryRemove } from './index';
 
 export interface HexMap{
 	[hash: string]: Hex;
@@ -15,19 +15,24 @@ export class Field {
 		const singularities = this.hexArray.filter(h => h.building === Building.Singularity);
 		for (const singularity of singularities){
 			const targets = singularity.adjacents().filter(a => a.building !== Building.Singularity);
-			targets[targets.length * Math.random() | 0].building = Building.Singularity;
+			if (!targets.length)
+				continue;
+			const target = targets[targets.length * Math.random() | 0];
+			if(target.building !== Building.None)
+				console.log(target)
+			target.building = Building.Singularity;
 		}
-
+		
 		const hexes = this.hexArray.filter(h => h.solidity >= 1 && h.building !== Building.Singularity);
-		const newSingularities = hexes.filter(h => h.building === Building.Spacer || h.building === Building.BoosterSpacer).length;
+		// const newSingularities = hexes.filter(h => h.building === Building.Spacer || h.building === Building.BoosterSpacer).length;
 
-		for (let i = newSingularities; i >= 0; i--){
+		for (let i = 1; i > 0; i--){
 			const hex = hexes.splice(hexes.length * Math.random() | 0, 1)[0];
 			hex.building = Building.Singularity;
 			if (!hexes.length)
-			return; //GAME OVER
+				return; //GAME OVER
 		}
-		this.disasterCount = 3;
+		this.disasterCount = 1;
 	}
 
 	solids: Array<Hex> = [];
@@ -113,15 +118,15 @@ export class Field {
 					const cost = Math.min(600 * delta, building.space);
 					game.space += cost;
 					building.space -= cost;
-					building.update();
 					break;
 				}
 			}
+			building.update();
 		}
 	}
 
-	getTriangles(): Array<Array<Hex>>{
-		const triangles: Array<Array<Hex>> = [];
+	getTriangles(): Array<[number, Array<Hex>]>{
+		const triangles: Array<[number, Array<Hex>]> = [];
 		for(const row in this.spacers){
 			if (!this.spacers[row].length)
 				continue;
@@ -137,7 +142,7 @@ export class Field {
 						&& hits.find(t => t === h)
 					);
 					for(const completion of completions){
-						triangles.push([this.spacers[row][i], this.spacers[row][j], completion]);
+						triangles.push([distance, [this.spacers[row][i], this.spacers[row][j], completion]]);
 					}
 				}
 			}
@@ -147,10 +152,8 @@ export class Field {
 
 	private spacers: HexGroupMap = {};
 
-	build(building: Building, hex: Hex): any {
-		hex.building = building;
-
-		if (building === Building.Spacer){
+	modifySpacer(hex: Hex, add: boolean){
+		if (add){
 			if (this.spacers[`y${hex.coord.y}`] == null){
 				this.spacers[`y${hex.coord.y}`] = [];
 			}
@@ -160,13 +163,27 @@ export class Field {
 				this.spacers[`x${hex.coord.x}`] = [];
 			}
 			this.spacers[`x${hex.coord.x}`].push(hex);
+		}else{
+			if (this.spacers[`y${hex.coord.y}`] != null)
+				tryRemove(this.spacers[`y${hex.coord.y}`], hex);
+	
+			if (this.spacers[`x${hex.coord.x}`] != null)
+				tryRemove(this.spacers[`x${hex.coord.x}`], hex);
 		}
-		console.log(this.spacers);
+	}
 
-		//this.disaster();
+	build(building: Building, hex: Hex): any {
+		hex.building = building;
+
+		this.disaster();
+
+		for(const hex of this.hexArray){
+			if (hex.building === Building.BoosterSpacer)
+				hex.building = Building.Spacer;
+		}
 
 		for(const triangle of this.getTriangles()){
-			for(const hex of triangle){
+			for(const hex of triangle[1]){
 				hex.building = Building.BoosterSpacer;
 			}
 		}
