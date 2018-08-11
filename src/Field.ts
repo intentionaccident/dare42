@@ -1,38 +1,36 @@
 import { Hex, Building } from './Hex';
 import { Vector2, Group, Raycaster } from 'three';
-import { flatten, game, tryRemove } from './index';
+import { flatten, game, tryRemove, random } from './index';
 
 export interface HexMap{
 	[hash: string]: Hex;
 }
 
 export class Field {
+	private danger: number = 0;
 	disaster(){
 		this.disasterCount--;
 		if (this.disasterCount > 0)
 			return;
 
-		const singularities = this.hexArray.filter(h => h.building === Building.Singularity);
-		for (const singularity of singularities){
-			const targets = singularity.adjacents().filter(a => a.building !== Building.Singularity);
-			if (!targets.length)
+		for (let events = this.danger; events > 0; events--){
+			const singularity = random(this.hexArray.filter(h => h.building === Building.Singularity))
+			if (!singularity)
+				break;
+			const target = random(singularity.adjacents().filter(a => a.vulnerable));
+			if (!target)
 				continue;
-			const target = targets[targets.length * Math.random() | 0];
-			if(target.building !== Building.None)
-				console.log(target)
 			target.building = Building.Singularity;
 		}
 		
-		const hexes = this.hexArray.filter(h => h.solidity >= 1 && h.building !== Building.Singularity);
-		// const newSingularities = hexes.filter(h => h.building === Building.Spacer || h.building === Building.BoosterSpacer).length;
-
-		for (let i = 1; i > 0; i--){
-			const hex = hexes.splice(hexes.length * Math.random() | 0, 1)[0];
+		const hex = random(this.hexArray.filter(h => h.vulnerable));
+		if (hex) {
 			hex.building = Building.Singularity;
-			if (!hexes.length)
-				return; //GAME OVER
 		}
-		this.disasterCount = 1;
+
+		this.danger++;
+
+		this.disasterCount = 2;
 	}
 
 	solids: Array<Hex> = [];
@@ -159,11 +157,16 @@ export class Field {
 					if (Math.abs(distance % 2 | 0) === 1)
 						continue;
 					distance = distance / 2 | 0;
+					console.log(distance);
 
 					const test = this.hex(
 						this.spacers[row][i].coord.x + distance,
 						this.spacers[row][i].coord.y
 					);
+
+					distance = Math.abs(distance);
+
+					console.log(test);
 
 					if (!test || test.indexHash in hexes)
 						continue;
@@ -214,16 +217,20 @@ export class Field {
 
 	build(building: Building, hex: Hex): any {
 		hex.building = building;
-		//this.disaster();
+		this.disaster();
 
 		for(const hex of this.hexArray){
 			if (hex.building === Building.Spacer)
 				hex.boost = 0;
+			hex.reinforced = false;
 		}
 
 		const hexes = this.getHexes();
 		for(const hex in hexes){
-			console.log(hexes[hex][1]);
+			hexes[hex][1].reinforced = true;
+			for(const subject of this.adjacents(hexes[hex][1], hexes[hex][0])){
+				subject.reinforced = true;
+			}
 		}
 
 		for(const triangle of this.getTriangles()){

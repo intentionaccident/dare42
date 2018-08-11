@@ -21,6 +21,12 @@ export function tryRemove<T>(array: Array<T>, item: T): boolean{
 	return true;
 }
 
+export function random<T>(array: Array<T>): T | void{
+	if (!array.length)
+		return;
+	return array[Math.random() * array.length | 0];
+}
+
 export var game : Game;
 
 $(() => {

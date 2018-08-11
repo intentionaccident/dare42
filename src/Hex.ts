@@ -34,6 +34,21 @@ export class Hex implements EventReceptor{
 	group: THREE.Group;
 	fractal: THREE.Group;
 	boost: number = 0;
+	private _reinforced: boolean;
+
+	public get vulnerable(): boolean{
+		return this.building !== Building.Singularity && !this.reinforced && this.solidity >= 1;
+	}
+
+	public get reinforced(): boolean {
+		return this._reinforced;
+	}
+
+	public set reinforced(value: boolean) {
+		this._reinforced = value;
+		if (this._reinforced && this.building === Building.Singularity)
+			this.building = Building.None;
+	}
 
 	private _building: Building = Building.None;
 	public get building(): Building {
@@ -132,7 +147,7 @@ export class Hex implements EventReceptor{
 		return group;
 	}
 
-	public get color(): Color {
+	private internalColor(): Color{
 		if (this.building === Building.Spacer)
 			return new Color(0.8, 0.1, 0.2 + this.boost * 0.3);
 		else if (this.building === Building.Vacuum)
@@ -140,6 +155,13 @@ export class Hex implements EventReceptor{
 		else if (this.building === Building.Singularity)
 			return new Color(0.1, 0.1, 0.4);
 		return new Color(this.solidity, this.solidity, this.solidity);
+	}
+
+	public get color(): Color {
+		const color = this.internalColor();
+		if (!this.reinforced)
+			color.multiplyScalar(0.5);
+		return color;
 	}
 
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
