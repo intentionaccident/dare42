@@ -8,12 +8,20 @@ export interface HexMap{
 
 export class Field {
 	disaster(){
-		const hexes = this.hexArray.filter(h => h.solidity >= 1);
-		for (let i = hexes.filter(h => h.building === Building.Spacer).length; i >= 0; i--){
+		const singularities = this.hexArray.filter(h => h.building === Building.Singularity);
+		for (const singularity of singularities){
+			const targets = singularity.adjacents().filter(a => a.building !== Building.Singularity);
+			targets[targets.length * Math.random() | 0].building = Building.Singularity;
+		}
+
+		const hexes = this.hexArray.filter(h => h.solidity >= 1 && h.building !== Building.Singularity);
+		const newSingularities = hexes.filter(h => h.building === Building.Spacer).length;
+
+		for (let i = newSingularities; i >= 0; i--){
 			const hex = hexes.splice(hexes.length * Math.random() | 0, 1)[0];
 			hex.building = Building.Singularity;
 			if (!hexes.length)
-				return; //GAME OVER
+			return; //GAME OVER
 		}
 		this.disasterCount = 3;
 	}
