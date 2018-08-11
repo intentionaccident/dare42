@@ -2,14 +2,13 @@ import { Vector2, MeshBasicMaterial, Group, CircleGeometry, Mesh, Object3D, Colo
 import { EventReceptor } from './Game';
 import { game } from "./index";
 import { textBlock } from '../styles/main.sass';
-import { Field } from "./Field";
+import { Field } from './Field';
 
 export enum Building{
 	None,
 	Spacer,
 	Vacuum,
-	Singularity,
-	BoosterSpacer,
+	Singularity
 }
 
 export class Hex implements EventReceptor{
@@ -34,10 +33,15 @@ export class Hex implements EventReceptor{
 	space: number;
 	group: THREE.Group;
 	fractal: THREE.Group;
+	boost: number = 0;
 
 	private _building: Building = Building.None;
 	public get building(): Building {
 		return this._building;
+	}
+
+	public get indexHash(): string {
+		return Field.indexHash(this.coord);
 	}
 
 	public set building(value: Building) {
@@ -130,9 +134,7 @@ export class Hex implements EventReceptor{
 
 	public get color(): Color {
 		if (this.building === Building.Spacer)
-			return new Color(0.8, 0.1, 0.4);
-		if (this.building === Building.BoosterSpacer)
-		return new Color(0.8, 0.1, 0.8);
+			return new Color(0.8, 0.1, 0.2 + this.boost * 0.3);
 		else if (this.building === Building.Vacuum)
 			return new Color(0.2, 0.5, 0.2);
 		else if (this.building === Building.Singularity)

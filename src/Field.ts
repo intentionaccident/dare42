@@ -105,12 +105,7 @@ export class Field {
 		for(const building of buildings){
 			switch(building.building){
 				case Building.Spacer: {
-					for (const hex of this.adjacents(building, 2)){
-						hex.solidity += 1 * delta;
-					}
-					break;
-				}case Building.BoosterSpacer: {
-					for (const hex of this.adjacents(building, 3)){
+					for (const hex of this.adjacents(building, 2 + building.boost)){
 						hex.solidity += 1 * delta;
 					}
 					break;
@@ -138,7 +133,7 @@ export class Field {
 					const distance = Math.abs(this.spacers[row][i].coord[compareAxis] - this.spacers[row][j].coord[compareAxis]);
 					const hits = this.spacers[row][j].adjacents(distance);
 					const completions = this.spacers[row][i].adjacents(distance).filter(h =>
-						(h.building === Building.Spacer || h.building === Building.BoosterSpacer)
+						(h.building === Building.Spacer)
 						&& hits.find(t => t === h)
 					);
 					for(const completion of completions){
@@ -148,6 +143,51 @@ export class Field {
 			}
 		}
 		return triangles;
+	}
+
+
+
+	getHexes(): SuperHexMap{
+		const hexes: SuperHexMap = {};
+		for(const row in this.spacers){
+			if (row[0] === 'x' || !this.spacers[row].length)
+				continue;
+			
+			for(let i = 0; i < this.spacers[row].length; i++){
+				for(let j = i + 1; j < this.spacers[row].length; j++){
+					let distance = (this.spacers[row][j].coord.x - this.spacers[row][i].coord.x);
+					if (Math.abs(distance % 2 | 0) === 1)
+						continue;
+					distance = distance / 2 | 0;
+
+					const test = this.hex(
+						this.spacers[row][i].coord.x + distance,
+						this.spacers[row][i].coord.y
+					);
+
+					if (!test || test.indexHash in hexes)
+						continue;
+
+					const hits = test.adjacents(distance).filter(h =>
+						(h.building === Building.Spacer));
+
+					const initialHits = hits.length;
+					if (initialHits < 4)
+						continue;
+
+
+					const crossHits = this.spacers[row][i].adjacents(distance)
+						.concat(this.spacers[row][j].adjacents(distance))
+						.filter(h => (h.building === Building.Spacer));
+
+					if (hits.filter(h => !crossHits.find(t => t === h)).length + 4 !== initialHits)
+						continue;
+
+					hexes[test.indexHash] = [distance, test];
+				}
+			}
+		}
+		return hexes;
 	}
 
 	private spacers: HexGroupMap = {};
@@ -174,17 +214,21 @@ export class Field {
 
 	build(building: Building, hex: Hex): any {
 		hex.building = building;
-
-		this.disaster();
+		//this.disaster();
 
 		for(const hex of this.hexArray){
-			if (hex.building === Building.BoosterSpacer)
-				hex.building = Building.Spacer;
+			if (hex.building === Building.Spacer)
+				hex.boost = 0;
+		}
+
+		const hexes = this.getHexes();
+		for(const hex in hexes){
+			console.log(hexes[hex][1]);
 		}
 
 		for(const triangle of this.getTriangles()){
 			for(const hex of triangle[1]){
-				hex.building = Building.BoosterSpacer;
+				hex.boost = Math.max(hex.boost, triangle[0] / 2 | 0);
 			}
 		}
 	}
@@ -198,5 +242,9 @@ export interface Buildings{
 
 interface HexGroupMap{
 	[key: string]: Array<Hex>;
+}
+
+interface SuperHexMap{
+	[key: string]: [number, Hex];
 }
 
