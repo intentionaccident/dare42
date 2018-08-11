@@ -1,4 +1,4 @@
-import { Hex } from './Hex';
+import { Hex, Building } from './Hex';
 import { Vector2, Group, Raycaster } from 'three';
 import { flatten } from './index';
 
@@ -37,12 +37,18 @@ export class Field {
 		return hex;
 	}
 
+	public hex(x: number, y: number){
+		return this.hexes[Field.indexHash(new Vector2(x | 0, y | 0))];
+	}
+
 	public generate(area: THREE.Box2) {
 		for (let x = area.min.x / (Hex.size * 2) | 0; x <= (area.max.x / (Hex.size * 2) + 1 | 0); x++) {
 			for (let y = area.min.y / (Hex.size * 2) | 0; y <= (area.max.y / (Hex.size * 2) + 1 | 0); y++) {
 				this.createHex(new Vector2(x, y));
 			}
 		}
+
+		this.hex(0, 0).building = Building.Spacer;
 
 		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 3, false)){
 			hex.solidity = Math.random() * 0.3  + 0.7;
@@ -90,11 +96,21 @@ export class Field {
 	}
 
 	tick(delta: number): any {
+		const spacers = [];
 		for(const hex of this.hexArray){
+			if (hex.building === Building.Spacer)
+				spacers.push(hex);
+
 			if (hex.solidity > 0.5)
 				hex.solidity -= 0.05 * delta;
 			else
 				hex.solidity -= 0.01 * delta;
+		}
+
+		for(const spacer of spacers){
+			for (const hex of this.adjacents(spacer, 3, false)){
+				hex.solidity += 0.1 * delta;
+			}
 		}
 	}
 }

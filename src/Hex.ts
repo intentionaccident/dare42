@@ -4,17 +4,33 @@ import { game } from "./index";
 import { textBlock } from '../styles/main.sass';
 import { Field } from "./Field";
 
+export enum Building{
+	None,
+	Spacer
+}
+
 export class Hex implements EventReceptor{
 	public static readonly radius: number = 0.3;
 	public static readonly gapPercent: number = 0.9;
 	public static readonly size: number = Math.sqrt(3 * (Hex.radius * Hex.radius) / 4);
 	public static readonly circumscribedRadius: number = Math.sqrt(3) / 3 * Hex.radius * Hex.gapPercent;
+
+	public static readonly hover: Mesh = new Mesh(
+		new CircleGeometry(Hex.radius * Hex.gapPercent, 6),
+		new MeshBasicMaterial({
+			color: 0x4444ff,
+			opacity: 0.7,
+			transparent: true
+		})
+	);
+
 	material: THREE.MeshBasicMaterial;
 	geometry: THREE.CircleGeometry;
 	mesh: THREE.Mesh;
 	space: number;
 	group: THREE.Group;
 	fractal: THREE.Group;
+	building: Building = Building.None;
 	constructor(public coord: Vector2, private _solidity: number, private field: Field) {
 		this.space = Math.random() * 200 | 0;
 		this.material = new MeshBasicMaterial({
@@ -55,6 +71,10 @@ export class Hex implements EventReceptor{
 	}
 
 	public set solidity(value: number){
+		if (value < 0)
+			value = 0;
+		if (value > 1)
+			value = 1;
 		this._solidity = value;
 		this.material.color = this.color;
 	}
@@ -90,24 +110,19 @@ export class Hex implements EventReceptor{
 		}
 		return group;
 	}
+
 	public get color(): Color {
+		if (this.building === Building.Spacer)
+			return new Color(0.8, 0.1, 0.8);
 		return new Color(this.solidity, this.solidity, this.solidity);
 	}
 
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
-		this.material.color = new Color(0x0000ff);
-		game.ui.textBlock.text(`Space: ${this.space}; Solidity: ${this.solidity * 100 | 0}%`);
-		for(const hex of this.field.adjacents(this, 2)){
-			hex.material.color = new Color(0x0000ff);
-		}
+		this.group.add(Hex.hover);
 	}
 
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>) {
-		this.material.color = this.color;
-		game.ui.textBlock.text();
-		for(const hex of this.field.adjacents(this, 2)){
-			hex.material.color = hex.color;
-		}
+		this.group.remove(Hex.hover);
 	}
 
 	public get adjacents() : Array<Hex>{
