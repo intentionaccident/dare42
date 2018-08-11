@@ -30,7 +30,7 @@ export class Field {
 	}
 
 	private createHex(coord: Vector2): Hex {
-		const hex = new Hex(coord, Math.random(), this);
+		const hex = new Hex(coord, Math.random() * 0.2, this);
 		this.hexes[Field.indexHash(hex.coord)] = hex;
 		this.group.add(hex.group);
 		return hex;
@@ -44,7 +44,16 @@ export class Field {
 		}
 	}
 
-	public adjacents(hex: Hex): Array<Hex>{ 
-		return hex.adjacentCoords.map(c => this.hexes[Field.indexHash(c)]).filter(c => c);
+	public adjacents(hex: Hex, distance = 1): Array<Hex>{ 
+		const adj = new Set<Hex>();
+		let found = [hex];
+		do{
+			found = flatten(found.map(f => f.adjacentCoords.map(c => this.hexes[Field.indexHash(c)]).filter(c => c)));
+			for(const f of found)
+				adj.add(f);
+			
+			distance--;
+		} while(distance > 0);
+		return Array.from(adj);
 	}
 }

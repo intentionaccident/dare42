@@ -87,7 +87,7 @@ export class Hex implements EventReceptor{
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.material.color = new Color(0x0000ff);
 		game.ui.textBlock.text(`Space: ${this.space}; Solidity: ${this.solidity * 100 | 0}%`);
-		for(const hex of this.field.adjacents(this)){
+		for(const hex of this.field.adjacents(this, 2)){
 			hex.material.color = new Color(0x0000ff);
 		}
 	}
@@ -95,7 +95,7 @@ export class Hex implements EventReceptor{
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.material.color = this.color;
 		game.ui.textBlock.text();
-		for(const hex of this.field.adjacents(this)){
+		for(const hex of this.field.adjacents(this, 2)){
 			hex.material.color = this.color;
 		}
 	}
