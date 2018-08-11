@@ -51,7 +51,7 @@ export class Field {
 		this.hex(0, 0).building = Building.Spacer;
 
 		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 3, false)){
-			hex.solidity = Math.random() * 0.3  + 0.7;
+			hex.solidity = 1;
 		}
 
 		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 4)){
@@ -101,21 +101,17 @@ export class Field {
 			if (hex.building !== Building.None)
 				buildings.push(hex);
 
-			if (hex.solidity > 0.5)
-				hex.solidity -= 0.05 * delta;
-			else
-				hex.solidity -= 0.01 * delta;
+			hex.solidity -= hex.adjacents.filter(h => h.solidity < 0.5).length * delta * 0.01;
 		}
 
 		for(const building of buildings){
 			switch(building.building){
 				case Building.Spacer: {
-					const cost = 5 * delta;
-					if (game.space >= cost)
-						game.space -= cost;
-					else
-						return;
-					for (const hex of this.adjacents(building, 3, false)){
+					for (const hex of this.adjacents(building, 2, false)){
+						if (hex.solidity >= 1)
+							continue;
+						if (!game.buy(1 * delta))
+							return;
 						hex.solidity += 0.1 * delta;
 					}
 					break;

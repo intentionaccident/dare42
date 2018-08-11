@@ -28,7 +28,7 @@ export class Game {
 	ui: UI;
 	hoverItem: EventReceptor | void;
 	clock: Clock;
-	space: number = 200;
+	space: number = 3000;
 	constructor() { }
 	public init() {
 		this.body = $(`<div class="${styles.body}"/>`);
@@ -103,5 +103,12 @@ export class Game {
 
 	public start() {
 		this.animate();
+	}
+	
+	public buy(cost: number): boolean{
+		if (this.space < cost)
+			return false;
+		this.space -= cost;
+		return true;
 	}
 }
