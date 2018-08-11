@@ -15,7 +15,7 @@ export class Hex implements EventReceptor{
 	space: number;
 	group: THREE.Group;
 	fractal: THREE.Group;
-	constructor(public coord: Vector2, public solidity: number, private field: Field) {
+	constructor(public coord: Vector2, private _solidity: number, private field: Field) {
 		this.space = Math.random() * 200 | 0;
 		this.material = new MeshBasicMaterial({
 			color: this.color,
@@ -53,6 +53,16 @@ export class Hex implements EventReceptor{
 		}
 		this.group.add(this.fractal);
 	}
+
+	public set solidity(value: number){
+		this._solidity = value;
+		this.material.color = this.color;
+	}
+
+	public get solidity(): number{
+		return this._solidity;
+	}
+
 	createFractal(level: number, layer = 0): Object3D {
 		if (level > 0)
 		level = 0;
@@ -96,11 +106,11 @@ export class Hex implements EventReceptor{
 		this.material.color = this.color;
 		game.ui.textBlock.text();
 		for(const hex of this.field.adjacents(this, 2)){
-			hex.material.color = this.color;
+			hex.material.color = hex.color;
 		}
 	}
 
-	public get adjacentCoords() : Array<Vector2>{
+	public adjacentCoords() : Array<Vector2>{
 		const xMod = Math.abs(this.coord.y % 2) ? 1 : -1;
 		return [
 			new Vector2(this.coord.x - 1, this.coord.y),

@@ -42,18 +42,40 @@ export class Field {
 				this.createHex(new Vector2(x, y));
 			}
 		}
+
+		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 3, false)){
+			hex.solidity = Math.random() * 0.2  + 0.8;
+		}
+
+		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 4)){
+			hex.solidity = Math.random() * 0.6  + 0.3;
+		}
+
+		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 5)){
+			hex.solidity = Math.random() * 0.5  + 0.2;
+		}
 	}
 
-	public adjacents(hex: Hex, distance = 1): Array<Hex>{ 
-		const adj = new Set<Hex>();
+	public adjacents(hex: Hex, distance = 1, only = true): Array<Hex>{ 
 		let found = [hex];
+		const adj = new Set<Hex>([hex]);
 		do{
-			found = flatten(found.map(f => f.adjacentCoords.map(c => this.hexes[Field.indexHash(c)]).filter(c => c)));
-			for(const f of found)
+			const unique = [];
+			for(const f of flatten(found.map(f => f.adjacentCoords().map(c => this.hexes[Field.indexHash(c)]).filter(c => c)))){
+				if(!f)
+					continue;
+				if(!adj.has(f))
+					unique.push(f);
 				adj.add(f);
+			}
+			found = unique;
 			
 			distance--;
 		} while(distance > 0);
+
+		if (only)
+			return found;
+
 		return Array.from(adj);
 	}
 }
