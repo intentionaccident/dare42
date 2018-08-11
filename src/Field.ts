@@ -1,6 +1,6 @@
 import { Hex, Building } from './Hex';
 import { Vector2, Group, Raycaster } from 'three';
-import { flatten } from './index';
+import { flatten, game } from './index';
 
 export interface HexMap{
 	[hash: string]: Hex;
@@ -108,6 +108,10 @@ export class Field {
 		}
 
 		for(const spacer of spacers){
+			if (game.space >= 5)
+				game.space -= 5;
+			else
+				break;
 			for (const hex of this.adjacents(spacer, 3, false)){
 				hex.solidity += 0.1 * delta;
 			}
