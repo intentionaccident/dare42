@@ -50,10 +50,7 @@ export class Hex implements EventReceptor{
 		this.group.userData.eventReceptor = this;
 		this.fractalise();
 	}
-	public update() {
-		this.material.color = this.color;
-		this.fractalise();
-	}
+
 	private fractalise(): void {
 		const level = 0;
 		if (this.fractal) {
@@ -123,7 +120,7 @@ export class Hex implements EventReceptor{
 
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.group.add(Hex.hover);
-		game.ui.textBlock.text(`Space: ${this.space}; Solidity: ${this.solidity * 100 | 0}%; Building: ${Building[this.building]}`)
+		this.update();
 	}
 
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>) {
@@ -158,5 +155,11 @@ export class Hex implements EventReceptor{
 			new Vector2(this.coord.x + xMod, this.coord.y - 1),
 			new Vector2(this.coord.x, this.coord.y - 1)
 		].map(v => this.field.hexes[Field.indexHash(v)]).filter(h => h);
+	}
+
+	public update(){
+		this.material.color = this.color;
+		this.fractalise();
+		game.ui.textBlock.text(`Space: ${this.space}; Solidity: ${this.solidity * 100 | 0}%; Building: ${Building[this.building]}`)
 	}
 }

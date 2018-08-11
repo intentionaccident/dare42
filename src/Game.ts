@@ -10,6 +10,7 @@ export interface EventReceptor{
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>);
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>);
 	onClick(event: JQuery.Event<HTMLCanvasElement, null>);
+	update();
 }
 
 export class Game {
@@ -69,7 +70,6 @@ export class Game {
 		if (this.hoverItem){
 			if (this.hoverItem === eventReceptor)
 				return;
-
 			this.hoverItem.onMouseOut(event);
 		}
 		
@@ -90,16 +90,17 @@ export class Game {
 	
 	private animate() {
 		requestAnimationFrame(() => this.animate());
+		this.update(this.clock.getDelta());
 		this.renderer.render(this.scene, this.camera);
 	}
-	
-	public start() {
-		this.animate();
-		setInterval(() => this.tick(), 1000);
+
+	update(delta: number): any {
+		this.field.update(delta);
+		this.ui.spaceField.text(this.space | 0);
+		this.hoverItem.update();
 	}
 
-	private tick() {
-		this.field.tick(this.clock.getDelta());
-		this.ui.spaceField.text(this.space);
+	public start() {
+		this.animate();
 	}
 }

@@ -96,7 +96,7 @@ export class Field {
 		return Array.from(adj);
 	}
 
-	tick(delta: number): any {
+	public update (delta: number) {
 		const buildings = [];
 		for(const hex of this.hexArray){
 			if (hex.building !== Building.None)
@@ -111,8 +111,9 @@ export class Field {
 		for(const building of buildings){
 			switch(building.building){
 				case Building.Spacer: {
-					if (game.space >= 5)
-						game.space -= 5;
+					const cost = 5 * delta;
+					if (game.space >= cost)
+						game.space -= cost;
 					else
 						return;
 					for (const hex of this.adjacents(building, 3, false)){
@@ -120,8 +121,9 @@ export class Field {
 					}
 					break;
 				} case Building.Vacuum: {
-					game.space += Math.min(5, building.space);
-					building.space -= Math.min(5, building.space);
+					const cost = Math.min(5 * delta, building.space);
+					game.space += cost;
+					building.space -= cost;
 					break;
 				}
 			}
