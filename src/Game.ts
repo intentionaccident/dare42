@@ -4,6 +4,7 @@ import styles from '../styles/main.sass';
 import { Vector2, Raycaster, Box2, MeshBasicMaterial, BoxGeometry, WebGLRenderer, Scene, PerspectiveCamera, Mesh, Object3D, Clock } from 'three';
 import { flatten } from './index';
 import { UI } from './UI';
+import { canvas } from '../styles/main.sass';
 
 export interface EventReceptor{
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>);
@@ -26,10 +27,11 @@ export class Game {
 	ui: UI;
 	hoverItem: EventReceptor | void;
 	clock: Clock;
+	space: number = 200;
 	constructor() { }
 	public init() {
 		this.body = $(`<div class="${styles.body}"/>`);
-		this.canvas = $('<div class="canvas"/>');
+		this.canvas = $(`<div class="${styles.canvas}"/>`);
 		this.body.append(this.canvas);
 		this.ui = new UI(this.body);
 		$('body').append(this.body);
@@ -50,6 +52,8 @@ export class Game {
 		this.field.generate(new Box2(new Vector2(-7, -6), new Vector2(7, 6)));
 		this.scene.add(this.field.group);
 		this.clock = new Clock(true);
+
+		this.ui.spaceField.text(this.space);
 	}
 	
 	onMouseMove(event: JQuery.Event<HTMLCanvasElement, null>): any {
@@ -82,5 +86,6 @@ export class Game {
 
 	private tick() {
 		this.field.tick(this.clock.getDelta());
+		this.ui.spaceField.text(this.space);
 	}
 }

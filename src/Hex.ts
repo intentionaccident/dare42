@@ -119,6 +119,7 @@ export class Hex implements EventReceptor{
 
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.group.add(Hex.hover);
+		game.ui.textBlock.text(`Space: ${this.space}; Solidity: ${this.solidity * 100 | 0}%`)
 	}
 
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>) {
