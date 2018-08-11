@@ -30,7 +30,7 @@ export class Field {
 	}
 
 	private createHex(coord: Vector2): Hex {
-		const hex = new Hex(coord, Math.random() * 0.2, this);
+		const hex = new Hex(coord, Math.random() * 0.1, this);
 		this.hexes[Field.indexHash(hex.coord)] = hex;
 		this.group.add(hex.group);
 		return hex;
@@ -44,7 +44,7 @@ export class Field {
 		}
 
 		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 3, false)){
-			hex.solidity = Math.random() * 0.2  + 0.8;
+			hex.solidity = Math.random() * 0.3  + 0.7;
 		}
 
 		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 4)){
@@ -53,6 +53,10 @@ export class Field {
 
 		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 5)){
 			hex.solidity = Math.random() * 0.5  + 0.2;
+		}
+
+		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 6)){
+			hex.solidity = Math.random() * 0.4;
 		}
 	}
 
