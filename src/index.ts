@@ -1,20 +1,24 @@
 import * as THREE from 'three';
 import $ from 'jquery';
 import styles from '../styles/main.sass';
-import { Vector2 } from 'three';
+import { Vector2, Vector3 } from 'three';
 
 function indexHash(coord : Vector2): string {
 	return `x${coord.x | 0}y${coord.y | 0}`;
 }
 
 class Hex {
+	public static readonly radius: number = 1;
+	public static readonly size: number = Math.sqrt(3 * (Hex.radius * Hex.radius) / 4);
 	material: THREE.MeshBasicMaterial;
 	geometry: THREE.CircleGeometry;
 	mesh: THREE.Mesh;
 	constructor(public coord: Vector2){
-		this.geometry = new THREE.CircleGeometry( 1, 6 );
+		this.geometry = new THREE.CircleGeometry( Hex.radius - 0.1, 6 );
 		this.material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
 		this.mesh = new THREE.Mesh( this.geometry, this.material );
+		this.mesh.position.x = Hex.size * ((this.coord.x | 0) * 2 + Math.abs(this.coord.y % 2));
+		this.mesh.position.y = Hex.radius * (this.coord.y | 0) * 1.5;
 		this.mesh.rotateZ(Math.PI / 6);
 	}
 }
@@ -34,7 +38,11 @@ class Field {
 	}
 
 	public generate(area?: THREE.Box2){
-		this.createHex(new Vector2(0, 0));
+		for(let x = -2; x <= 2; x++){
+			for(let y = -2; y <= 2; y++){
+				this.createHex(new Vector2(x, y));
+			}
+		}
 	}
 }
 
