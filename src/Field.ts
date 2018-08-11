@@ -8,6 +8,10 @@ export interface HexMap{
 
 export class Field {
 	disaster(){
+		this.disasterCount--;
+		if (this.disasterCount > 0)
+			return;
+
 		const singularities = this.hexArray.filter(h => h.building === Building.Singularity);
 		for (const singularity of singularities){
 			const targets = singularity.adjacents().filter(a => a.building !== Building.Singularity);
@@ -15,7 +19,7 @@ export class Field {
 		}
 
 		const hexes = this.hexArray.filter(h => h.solidity >= 1 && h.building !== Building.Singularity);
-		const newSingularities = hexes.filter(h => h.building === Building.Spacer).length;
+		const newSingularities = hexes.filter(h => h.building === Building.Spacer || h.building === Building.BoosterSpacer).length;
 
 		for (let i = newSingularities; i >= 0; i--){
 			const hex = hexes.splice(hexes.length * Math.random() | 0, 1)[0];
@@ -67,7 +71,7 @@ export class Field {
 			}
 		}
 
-		this.hex(0, 0).building = Building.Spacer;
+		this.build(Building.Spacer, this.hex(0, 0));
 
 		for(const hex of this.hexArray){
 			if (hex.solidity > 0.5)
@@ -100,7 +104,12 @@ export class Field {
 						hex.solidity += 1 * delta;
 					}
 					break;
-				} case Building.Vacuum: {
+				}case Building.BoosterSpacer: {
+					for (const hex of this.adjacents(building, 3)){
+						hex.solidity += 1 * delta;
+					}
+					break;
+				}case Building.Vacuum: {
 					const cost = Math.min(600 * delta, building.space);
 					game.space += cost;
 					building.space -= cost;
@@ -111,14 +120,55 @@ export class Field {
 		}
 	}
 
-	build(building: Building, hex: Hex): any {
-		if (building === Building.Spacer){
-			const adjacents = this.adjacents(hex, 2);
-		}
+	getTriangles(): Array<Array<Hex>>{
+		const triangles: Array<Array<Hex>> = [];
+		for(const row in this.spacers){
+			if (!this.spacers[row].length)
+				continue;
 
-		this.disasterCount--;
-		if (this.disasterCount < 0){
-			this.disaster();
+			const compareAxis = row[0] === 'x' ? 'y' : 'x';
+			
+			for(let i = 0; i < this.spacers[row].length; i++){
+				for(let j = i + 1; j < this.spacers[row].length; j++){
+					const distance = Math.abs(this.spacers[row][i].coord[compareAxis] - this.spacers[row][j].coord[compareAxis]);
+					const hits = this.spacers[row][j].adjacents(distance);
+					const completions = this.spacers[row][i].adjacents(distance).filter(h =>
+						(h.building === Building.Spacer || h.building === Building.BoosterSpacer)
+						&& hits.find(t => t === h)
+					);
+					for(const completion of completions){
+						triangles.push([this.spacers[row][i], this.spacers[row][j], completion]);
+					}
+				}
+			}
+		}
+		return triangles;
+	}
+
+	private spacers: HexGroupMap = {};
+
+	build(building: Building, hex: Hex): any {
+		hex.building = building;
+
+		if (building === Building.Spacer){
+			if (this.spacers[`y${hex.coord.y}`] == null){
+				this.spacers[`y${hex.coord.y}`] = [];
+			}
+			this.spacers[`y${hex.coord.y}`].push(hex);
+
+			if (this.spacers[`x${hex.coord.x}`] == null){
+				this.spacers[`x${hex.coord.x}`] = [];
+			}
+			this.spacers[`x${hex.coord.x}`].push(hex);
+		}
+		console.log(this.spacers);
+
+		//this.disaster();
+
+		for(const triangle of this.getTriangles()){
+			for(const hex of triangle){
+				hex.building = Building.BoosterSpacer;
+			}
 		}
 	}
 }
@@ -126,3 +176,10 @@ export class Field {
 export interface Buildings{
 	[key: string]: number;
 }
+
+
+
+interface HexGroupMap{
+	[key: string]: Array<Hex>;
+}
+

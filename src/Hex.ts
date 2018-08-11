@@ -8,7 +8,8 @@ export enum Building{
 	None,
 	Spacer,
 	Vacuum,
-	Singularity
+	Singularity,
+	BoosterSpacer,
 }
 
 export class Hex implements EventReceptor{
@@ -108,7 +109,9 @@ export class Hex implements EventReceptor{
 
 	public get color(): Color {
 		if (this.building === Building.Spacer)
-			return new Color(0.8, 0.1, 0.8);
+			return new Color(0.8, 0.1, 0.4);
+		if (this.building === Building.BoosterSpacer)
+		return new Color(0.8, 0.1, 0.8);
 		else if (this.building === Building.Vacuum)
 			return new Color(0.2, 0.5, 0.2);
 		else if (this.building === Building.Singularity)
@@ -142,7 +145,6 @@ export class Hex implements EventReceptor{
 			return false;
 		game.space -= Hex.buildingPrice[building];
 		this.field.build(building, this);
-		this.building = building;
 		return true;
 	}
 
