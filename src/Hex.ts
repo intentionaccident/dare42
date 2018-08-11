@@ -33,6 +33,7 @@ export class Hex implements EventReceptor{
 	group: THREE.Group;
 	fractal: THREE.Group;
 	public building: Building = Building.None;
+	fractalLevel: number;
 	constructor(public coord: Vector2, private _solidity: number, private field: Field) {
 		this.space = Math.random() * 200 | 0;
 		this.material = new MeshBasicMaterial({
@@ -52,18 +53,20 @@ export class Hex implements EventReceptor{
 	}
 
 	private fractalise(): void {
-		const level = 0;
+		const level = Math.min(6, this.space / 30 | 0);
+		if (this.fractalLevel === level)
+			return;
+		this.fractalLevel = level;
+
 		if (this.fractal) {
 			this.group.remove(this.fractal);
 			this.fractal = null;
 		}
-		if (!level) {
-			return;
-		}
+
 		this.fractal = new Group();
-		for (let i = 0; i < 6; i++) {
-			const fractal = this.createFractal(level - 1);
-			fractal.rotateZ(i * Math.PI * 2 / 6);
+		for (let i = this.fractalLevel; i > 0; i--) {
+			const fractal = this.createFractal();
+			fractal.rotateZ((i - 1) * Math.PI * 2 / 6);
 			this.fractal.add(fractal);
 		}
 		this.group.add(this.fractal);
@@ -82,31 +85,13 @@ export class Hex implements EventReceptor{
 		return this._solidity;
 	}
 
-	createFractal(level: number, layer = 0): Object3D {
-		if (level > 0)
-		level = 0;
+	createFractal(): Object3D {
 		const group = new Group();
-		let size = Hex.circumscribedRadius * Hex.gapPercent * Math.pow(2, -layer);
+		let size = Hex.circumscribedRadius * Hex.gapPercent;
 		const mesh = new Mesh(new CircleGeometry(size, 3), this.material);
 		mesh.position.y += Hex.circumscribedRadius;
-		if (!layer) {
-			mesh.rotateZ(Math.PI / 6);
-		}
-		else {
-			mesh.rotateZ(Math.PI / 2);
-		}
+		mesh.rotateZ(Math.PI / 6);
 		group.add(mesh);
-		if (layer !== level) {
-			for (let i = 0; i < 3; i++) {
-				const fractal = this.createFractal(level, layer + 1);
-				fractal.position.y += Math.pow(2, -layer) * Hex.radius / 2;
-				if (!layer)
-				fractal.rotateZ(Math.PI * 2 / 6);
-				fractal.rotateZ(i * Math.PI * 2 / 3);
-				console.log(i * Math.PI / 3);
-				group.add(fractal);
-			}
-		}
 		return group;
 	}
 
@@ -120,7 +105,7 @@ export class Hex implements EventReceptor{
 
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.group.add(Hex.hover);
-		this.update();
+		this.setText();
 	}
 
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>) {
@@ -160,6 +145,10 @@ export class Hex implements EventReceptor{
 	public update(){
 		this.material.color = this.color;
 		this.fractalise();
+		this.setText();
+	}
+
+	private setText(){
 		game.ui.textBlock.text(`Space: ${this.space}; Solidity: ${this.solidity * 100 | 0}%; Building: ${Building[this.building]}`)
 	}
 }

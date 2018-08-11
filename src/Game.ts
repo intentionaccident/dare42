@@ -97,7 +97,8 @@ export class Game {
 	update(delta: number): any {
 		this.field.update(delta);
 		this.ui.spaceField.text(this.space | 0);
-		this.hoverItem.update();
+		if (this.hoverItem)
+			this.hoverItem.update();
 	}
 
 	public start() {

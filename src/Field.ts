@@ -22,7 +22,6 @@ export class Field {
 		this.group = new Group();
 	}
 
-	
 	public static indexHash(coord : Vector2): string {
 		return `x${coord.x | 0}y${coord.y | 0}`;
 	}
@@ -97,7 +96,7 @@ export class Field {
 	}
 
 	public update (delta: number) {
-		const buildings = [];
+		const buildings: Array<Hex> = [];
 		for(const hex of this.hexArray){
 			if (hex.building !== Building.None)
 				buildings.push(hex);
@@ -124,6 +123,7 @@ export class Field {
 					const cost = Math.min(5 * delta, building.space);
 					game.space += cost;
 					building.space -= cost;
+					building.update();
 					break;
 				}
 			}
