@@ -30,16 +30,21 @@ export class Field {
 	}
 
 	private createHex(coord: Vector2): Hex {
-		const hex = new Hex(coord, Math.random());
+		const hex = new Hex(coord, Math.random(), this);
 		this.hexes[Field.indexHash(hex.coord)] = hex;
 		this.group.add(hex.group);
 		return hex;
 	}
+
 	public generate(area: THREE.Box2) {
 		for (let x = area.min.x / (Hex.size * 2) | 0; x <= (area.max.x / (Hex.size * 2) + 1 | 0); x++) {
 			for (let y = area.min.y / (Hex.size * 2) | 0; y <= (area.max.y / (Hex.size * 2) + 1 | 0); y++) {
 				this.createHex(new Vector2(x, y));
 			}
 		}
+	}
+
+	public adjacents(hex: Hex): Array<Hex>{ 
+		return hex.adjacentCoords.map(c => this.hexes[Field.indexHash(c)]).filter(c => c);
 	}
 }

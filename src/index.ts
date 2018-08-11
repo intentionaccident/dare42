@@ -13,8 +13,10 @@ export function flatten(arr, result = []) {
 	return result;
 };
 
+export var game : Game;
+
 $(() => {
-	const game = new Game();
+	game = new Game();
 	game.init();
 	game.start();
 });
