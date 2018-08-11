@@ -85,6 +85,16 @@ export class Hex implements EventReceptor{
 		return this._solidity;
 	}
 
+	public radial(theta: number, distance: number): Hex {
+		if (distance === 0)
+			return this;
+		const direction = theta / distance | 0;
+		const rib = this.vector(this.coord, direction, distance).add(this.coord);
+		const location = this.vector(rib, (direction + 2) % 6, theta % distance).add(rib);
+
+		return this.field.hex(location.x, location.y);
+	}
+
 	createFractal(): Object3D {
 		const group = new Group();
 		let size = Hex.circumscribedRadius * Hex.gapPercent;
@@ -121,11 +131,9 @@ export class Hex implements EventReceptor{
 	}
 
 	private tryBuild(building: Building): boolean {
-		if (this.solidity < 0.5)
+		if (this.solidity < 0.9)
 			return false;
 		if (this.building !== Building.None)
-			return false;
-		if (building === Building.Vacuum && this.field.buildings[Building[Building.Spacer]] <= this.field.buildings[Building[Building.Vacuum]])
 			return false;
 		if (game.space < Hex.buildingPrice[building])
 			return false;
@@ -135,16 +143,31 @@ export class Hex implements EventReceptor{
 		return true;
 	}
 
-	public get adjacents() : Array<Hex>{
-		const xMod = Math.abs(this.coord.y % 2) ? 1 : -1;
-		return [
-			new Vector2(this.coord.x - 1, this.coord.y),
-			new Vector2(this.coord.x + 1, this.coord.y),
-			new Vector2(this.coord.x + xMod, this.coord.y + 1),
-			new Vector2(this.coord.x, this.coord.y + 1),
-			new Vector2(this.coord.x + xMod, this.coord.y - 1),
-			new Vector2(this.coord.x, this.coord.y - 1)
-		].map(v => this.field.hexes[Field.indexHash(v)]).filter(h => h);
+	public vector(vector: Vector2, theta: number, distance: number): Vector2{
+		switch (theta % 6){
+			case(0):
+				return new Vector2(distance, 0);
+			case(1):
+				return new Vector2((distance + Math.abs(vector.y % 2)) / 2 | 0, distance);
+			case(2):
+				return new Vector2(-(distance + (1 - Math.abs(vector.y % 2))) / 2 | 0, distance);
+			case(3):
+				return new Vector2(-distance, 0);
+			case(4):
+				return new Vector2(-(distance + (1 - Math.abs(vector.y % 2))) / 2 | 0, -distance);
+			case(5):
+				return new Vector2((distance + Math.abs(vector.y % 2)) / 2 | 0, -distance);
+		}
+	}
+
+	public adjacents(distance = 1) : Array<Hex>{
+		const adjacents: Array<Hex> = [];
+		for (let i = 0; i < 6 * distance; i++){
+			const hex = this.radial(i, distance);
+			if (hex)
+				adjacents.push(hex);
+		}
+		return adjacents;
 	}
 
 	public update(){

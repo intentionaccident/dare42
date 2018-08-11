@@ -31,7 +31,7 @@ export class Game {
 	space: number = 1000;
 	constructor() { }
 	public init() {
-		this.body = $(`<div class="${styles.body}"/>`);
+		this.body = $(`<div/>`);
 		$('body').on('contextmenu', 'canvas', function(e){ return false; });
 		this.canvas = $(`<div class="${styles.canvas}"/>`);
 		this.body.append(this.canvas);
