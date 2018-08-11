@@ -7,7 +7,8 @@ import { Field } from "./Field";
 export enum Building{
 	None,
 	Spacer,
-	Vacuum
+	Vacuum,
+	Singularity
 }
 
 export class Hex implements EventReceptor{
@@ -110,6 +111,8 @@ export class Hex implements EventReceptor{
 			return new Color(0.8, 0.1, 0.8);
 		else if (this.building === Building.Vacuum)
 			return new Color(0.2, 0.5, 0.2);
+		else if (this.building === Building.Singularity)
+			return new Color(0.1, 0.1, 0.4);
 		return new Color(this.solidity, this.solidity, this.solidity);
 	}
 

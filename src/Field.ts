@@ -8,11 +8,18 @@ export interface HexMap{
 
 export class Field {
 	disaster(){
-		
+		const hexes = this.hexArray.filter(h => h.solidity >= 1);
+		for (let i = hexes.filter(h => h.building === Building.Spacer).length; i >= 0; i--){
+			const hex = hexes.splice(hexes.length * Math.random() | 0, 1)[0];
+			hex.building = Building.Singularity;
+			if (!hexes.length)
+				return; //GAME OVER
+		}
+		this.disasterCount = 3;
 	}
 
 	solids: Array<Hex> = [];
-	disasterCount: any;
+	disasterCount: number = 3;
 	smash(raycaster: Raycaster): Hex | void{
 		const intersect = raycaster.intersectObjects(flatten(this.hexArray.map(h => h.mesh)))[0];
 		if (!intersect)
