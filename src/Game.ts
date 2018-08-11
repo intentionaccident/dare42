@@ -1,7 +1,7 @@
 import { Field } from './Field';
 import $ from 'jquery';
 import styles from '../styles/main.sass';
-import { Vector2, Raycaster, Box2, MeshBasicMaterial, BoxGeometry, WebGLRenderer, Scene, PerspectiveCamera, Mesh, Object3D } from 'three';
+import { Vector2, Raycaster, Box2, MeshBasicMaterial, BoxGeometry, WebGLRenderer, Scene, PerspectiveCamera, Mesh, Object3D, Clock } from 'three';
 import { flatten } from './index';
 import { UI } from './UI';
 
@@ -25,6 +25,7 @@ export class Game {
 	canvasSize: THREE.Vector2;
 	ui: UI;
 	hoverItem: EventReceptor | void;
+	clock: Clock;
 	constructor() { }
 	public init() {
 		this.body = $(`<div class="${styles.body}"/>`);
@@ -48,6 +49,7 @@ export class Game {
 		this.field = new Field();
 		this.field.generate(new Box2(new Vector2(-7, -6), new Vector2(7, 6)));
 		this.scene.add(this.field.group);
+		this.clock = new Clock(true);
 	}
 	
 	onMouseMove(event: JQuery.Event<HTMLCanvasElement, null>): any {
@@ -75,5 +77,10 @@ export class Game {
 	
 	public start() {
 		this.animate();
+		setInterval(() => this.tick(), 1000);
+	}
+
+	private tick() {
+		this.field.tick(this.clock.getDelta());
 	}
 }

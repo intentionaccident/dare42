@@ -110,7 +110,7 @@ export class Hex implements EventReceptor{
 		}
 	}
 
-	public adjacentCoords() : Array<Vector2>{
+	public get adjacents() : Array<Hex>{
 		const xMod = Math.abs(this.coord.y % 2) ? 1 : -1;
 		return [
 			new Vector2(this.coord.x - 1, this.coord.y),
@@ -119,6 +119,6 @@ export class Hex implements EventReceptor{
 			new Vector2(this.coord.x, this.coord.y + 1),
 			new Vector2(this.coord.x + xMod, this.coord.y - 1),
 			new Vector2(this.coord.x, this.coord.y - 1)
-		];
+		].map(v => this.field.hexes[Field.indexHash(v)]).filter(h => h);
 	}
 }

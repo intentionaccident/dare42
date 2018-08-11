@@ -7,6 +7,7 @@ export interface HexMap{
 }
 
 export class Field {
+	solids: Array<Hex> = [];
 	smash(raycaster: Raycaster): Hex | void{
 		const intersect = raycaster.intersectObjects(flatten(this.hexArray.map(h => h.mesh)))[0];
 		if (!intersect)
@@ -58,6 +59,11 @@ export class Field {
 		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 6)){
 			hex.solidity = Math.random() * 0.4;
 		}
+
+		for(const hex of this.hexArray){
+			if (hex.solidity > 0.5)
+				this.solids.push(hex);
+		}
 	}
 
 	public adjacents(hex: Hex, distance = 1, only = true): Array<Hex>{ 
@@ -65,7 +71,7 @@ export class Field {
 		const adj = new Set<Hex>([hex]);
 		do{
 			const unique = [];
-			for(const f of flatten(found.map(f => f.adjacentCoords().map(c => this.hexes[Field.indexHash(c)]).filter(c => c)))){
+			for(const f of flatten(found.map(f => f.adjacents))){
 				if(!f)
 					continue;
 				if(!adj.has(f))
@@ -81,5 +87,14 @@ export class Field {
 			return found;
 
 		return Array.from(adj);
+	}
+
+	tick(delta: number): any {
+		for(const hex of this.hexArray){
+			if (hex.solidity > 0.5)
+				hex.solidity -= 0.05 * delta;
+			else
+				hex.solidity -= 0.01 * delta;
+		}
 	}
 }
