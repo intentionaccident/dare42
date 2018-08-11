@@ -49,6 +49,9 @@ module.exports = {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist')
   },
+  resolve: {
+    extensions: ['.ts', '.sass', '.js']
+  },
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Ludum Dare'
