@@ -35,7 +35,7 @@ export class Hex implements EventReceptor{
 	public building: Building = Building.None;
 	fractalLevel: number;
 	constructor(public coord: Vector2, private _solidity: number, private field: Field) {
-		this.space = Math.random() * 3000 | 0;
+		this.space = Math.random() * 300 | 0;
 		this.material = new MeshBasicMaterial({
 			color: this.color,
 			opacity: 0.5,
@@ -53,7 +53,7 @@ export class Hex implements EventReceptor{
 	}
 
 	private fractalise(): void {
-		const level = Math.min(6, this.space / 500 | 0);
+		const level = Math.min(6, this.space / 50 | 0);
 		if (this.fractalLevel === level)
 			return;
 		this.fractalLevel = level;
@@ -125,9 +125,12 @@ export class Hex implements EventReceptor{
 			return false;
 		if (this.building !== Building.None)
 			return false;
+		if (building === Building.Vacuum && this.field.buildings[Building[Building.Spacer]] <= this.field.buildings[Building[Building.Vacuum]])
+			return false;
 		if (game.space < Hex.buildingPrice[building])
 			return false;
 		game.space -= Hex.buildingPrice[building];
+		this.field.build(building, this);
 		this.building = building;
 		return true;
 	}

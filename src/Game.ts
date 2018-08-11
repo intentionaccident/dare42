@@ -28,7 +28,7 @@ export class Game {
 	ui: UI;
 	hoverItem: EventReceptor | void;
 	clock: Clock;
-	space: number = 3000;
+	space: number = 1000;
 	constructor() { }
 	public init() {
 		this.body = $(`<div class="${styles.body}"/>`);

@@ -49,6 +49,7 @@ export class Field {
 		}
 
 		this.hex(0, 0).building = Building.Spacer;
+		this.build(Building.Spacer, this.hex(0, 0));
 
 		for (const hex of this.adjacents(this.hexes[Field.indexHash(new Vector2(0, 0))], 3, false)){
 			hex.solidity = 1;
@@ -126,4 +127,17 @@ export class Field {
 			
 		}
 	}
+
+	public buildings: Buildings = {};
+
+	build(building: Building, hex: Hex): any {
+		if (!this.buildings[Building[building]])
+			this.buildings[Building[building]] = 1;
+		else
+			this.buildings[Building[building]]++;
+	}
+}
+
+export interface Buildings{
+	[key: string]: number;
 }
