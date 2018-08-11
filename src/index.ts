@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import $ from 'jquery';
 import styles from '../styles/main.sass';
-import { Vector2, Vector3 } from 'three';
+import { Vector2, Vector3, Raycaster } from 'three';
 
 function indexHash(coord : Vector2): string {
 	return `x${coord.x | 0}y${coord.y | 0}`;
@@ -55,6 +55,9 @@ class Game{
 	renderer: THREE.WebGLRenderer;
 	cube: THREE.Mesh;
 	field: Field;
+	rendererElement: JQuery<HTMLCanvasElement>;
+	raycaster: THREE.Raycaster;
+	canvasSize: THREE.Vector2;
 	constructor(){}
 
 	public init(){
@@ -68,8 +71,13 @@ class Game{
 		this.camera = new THREE.PerspectiveCamera( 75, 16.0/9, 0.1, 1000 );
 		this.camera.position.z = 5;
 		this.renderer = new THREE.WebGLRenderer();
-		this.renderer.setSize( this.canvas.width(), this.canvas.width() / 16.0 * 9 );
+		this.canvasSize = new Vector2(this.canvas.width(), this.canvas.width() / 16.0 * 9);
+		this.renderer.setSize( this.canvasSize.x, this.canvasSize.y );
 		this.canvas.get()[0].appendChild(this.renderer.domElement);
+		this.raycaster = new Raycaster();
+
+		this.rendererElement = $(this.renderer.domElement);
+		this.rendererElement.mousemove(e => this.onMouseMove(e))
 
 		
 		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -79,7 +87,15 @@ class Game{
 		this.field = new Field();
 		this.field.generate();
 		this.scene.add( this.field.group );
-		
+	}
+
+	onMouseMove(event: JQuery.Event<HTMLCanvasElement, null>): any {
+		const mouse = new Vector2 ( event.offsetX / this.canvasSize.x * 2 - 1, event.offsetY / this.canvasSize.y * -2 + 1);
+		this.raycaster.setFromCamera(mouse, this.camera);
+		for (const intersect of this.raycaster.intersectObjects( this.field.group.children )) {
+			console.log(intersect);
+			(intersect.object as any).material.color.set( 0xff0000 );
+		}
 	}
 
 	private animate(){
