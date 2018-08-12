@@ -35,7 +35,7 @@ export class Game {
 		$('body').on('contextmenu', 'canvas', function(e){ return false; });
 		this.canvas = $(`<div class="${styles.canvas}"/>`);
 		this.body.append(this.canvas);
-		this.ui = new UI(this.body);
+		this.ui = new UI(this.body, this.canvas);
 		$('body').append(this.body);
 		this.scene = new Scene();
 		this.camera = new OrthographicCamera(-10, 10, -10, 10, 0, 1000);
