@@ -45,6 +45,10 @@ export function crossMap<T>(array: Array<T>): Array<Array<T>> {
 export var game : Game;
 
 $(() => {
+	startGame();
+});
+
+export function startGame(){
 	game = new Game();
 	game.init();
-});
+}

@@ -1,6 +1,7 @@
 import styles from '../styles/main.sass';
 import $ from 'jquery';
-import { game } from './index';
+import { game, startGame } from './index';
+import { Game } from './Game';
 
 interface Email{
 	subject: string;
@@ -12,14 +13,16 @@ export class UI {
 	email: JQuery<HTMLElement>;
 	ui: JQuery<HTMLElement>;
 	emails: {[subject:string]: Email} = {};
-	constructor(body: JQuery<HTMLElement>, private canvas: JQuery<HTMLElement>) {
+	constructor(private body: JQuery<HTMLElement>, private canvas: JQuery<HTMLElement>) {
 		this.ui = $(`<div class="${styles.ui}">
 			<div class="email ${styles.button}">Email</div>
 			<div class="${styles.space}"/>
 			<div class="wait ${styles.button}">Wait</div>
 		</div>`);
 
-		body.append(this.ui);
+		this.body.append(this.ui);
+
+		console.log('tet');
 
 		this.email = $(`
 			<div class="${styles.email}">
@@ -105,5 +108,44 @@ export class UI {
 		const button = $(`<div class="${styles.tag}">${email.subject}</div>`);
 		button.click(() => this.showEmail(email));
 		return button;
+	}
+
+	isOver: boolean = false;
+	gameOver(victory: boolean) {
+		if (this.isOver)
+			return;
+		this.isOver = true;
+		this.ui.hide();
+
+		this.email.find(`.${styles.exit}`).click(e => {
+			$('body').animate({width: 'toggle'}, 400, 'swing');
+			this.body.animate({height: 'toggle'}, 400, 'swing', () => {
+				setTimeout(() => {
+					window.location.reload(false); 
+				}, 2000);
+			});
+		});
+
+		if (victory){
+			this.addEmail({
+				subject: "Sensor Update",
+				sender: "Automatic Alert Watchdog",
+				body: "All Sensors Nominal.<br \>\
+				Spatial Anomaly Rectified.<br \>\
+				EOM<br \>\
+				"
+			});
+			return;
+		}
+
+		this.addEmail({
+			subject: "ALEﾌ: INSTABIITY C6RIT",
+			sender: "Automat日祖edßAle¬rt Watc四og",
+			body: "CDE CAN9ARY: FULL EME GñENCY<br />\
+				ALL SE￥NSOS NON RE<br />\
+				SPOSÖIVE<br />\
+				PACIAL INTk峩々mGRIY IRR ŁEP%ARABLY LOW<br />\
+				EOM0"
+		});
 	}
 }

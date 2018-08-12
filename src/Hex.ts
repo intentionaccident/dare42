@@ -45,8 +45,10 @@ export class Hex implements EventReceptor{
 			return false;
 		if (this.building === Building.Origin)
 			return false;
-		if (this.reinforced && this.building !== Building.Spacer)
-			return false;
+		if (this.reinforced){
+			if (this.building !== Building.Spacer)
+				return false;
+		}
 		if (this.solidity < 1)
 			return false;
 		return true;
@@ -63,6 +65,9 @@ export class Hex implements EventReceptor{
 				this.warp = 0;
 			if(this.building === Building.Tear)
 				this.building = Building.None;
+			if(this.building === Building.Origin){
+				game.ui.gameOver(true);
+			}
 		}
 	}
 
@@ -133,7 +138,7 @@ export class Hex implements EventReceptor{
 		this.group.add(this.mesh);
 		this.group.userData.eventReceptor = this;
 
-		if(Math.random() > 0.92)
+		if(Math.random() > 0.95)
 			this.building = Building.Tear;
 	}
 

@@ -39,7 +39,7 @@ export class Field {
 
 		const targets = this.hexArray.filter(h => h.vulnerable);
 
-		for (let events = targets.length/35 + 1; events > 0; events--){
+		for (let events = targets.length/40; events > 0; events--){
 			const target = random(targets);
 			if (!target){
 				break;
@@ -51,7 +51,7 @@ export class Field {
 		if (!this.origin || this.origin.solidity < 1)
 			return;
 
-		for(let i = 2, level = 1; level < 50 && i > 0; level++){
+		for(let i = 0, level = 1; level < 50 && i > 0; level++){
 			const items = this.origin.adjacents(level).filter(h => h.vulnerable);
 			while(items.length){
 				const victim = random(items);
@@ -97,10 +97,6 @@ export class Field {
 			return;
 		this.hexes[hex.indexHash] = hex;
 		this.group.add(hex.group);
-
-		if (Math.abs(coord.x) <= 0 && Math.abs(coord.y) <= 0){
-			this.build(Building.Spacer, hex);
-		}
 		return hex;
 	}
 
@@ -113,14 +109,19 @@ export class Field {
 	public generate() {
 		const center = this.createHex(new Vector2());
 		for(let i = 1; i <= 50; i++){
-			for(const vector of center.adjacentVectors(i))
-				this.createHex(vector);
+			for(const vector of center.adjacentVectors(i)){
+				const hex = this.createHex(vector);
+				if (i === 1)
+					hex.solidity = 1;
+			}
 		}
 		const origin = random(center.adjacents(5));
 		if (origin){
 			origin.building = Building.Origin;
 			this.origin = origin;
 		}
+
+		this.build(Building.Spacer, this.hex(0, 0));
 	}
 
 	public adjacents(hex: Hex, distance = 1): Array<Hex>{
@@ -152,6 +153,10 @@ export class Field {
 				}
 			}
 			building.update();
+		}
+
+		if(!this.hexArray.some(h => h.solidity > 0 && h.building === Building.None)){
+			game.ui.gameOver(false);
 		}
 	}
 
