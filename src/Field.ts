@@ -1,5 +1,5 @@
 import { Hex, Building } from './Hex';
-import { Vector2, Group, Raycaster, Vector3, Quaternion } from 'three';
+import { Vector2, Group, Raycaster, Vector3, Quaternion, Line, Geometry, LineBasicMaterial } from 'three';
 import { flatten, game, tryRemove, random, groupBy, crossMap } from './index';
 
 export interface HexMap{
@@ -9,6 +9,11 @@ export interface HexMap{
 interface SuperHex{
 	center: Hex;
 	radius: Vector3;
+}
+
+export interface Triangle{
+	hexes: Array<Hex>;
+	size: number;
 }
 
 export interface Buildings{
@@ -56,13 +61,17 @@ export class Field {
 		const intersect = raycaster.intersectObjects(flatten(this.hexArray.map(h => h.mesh)))[0];
 		if (!intersect)
 			return;
+
 		return intersect.object.parent.userData.eventReceptor as Hex;
 	}
 
-	group: THREE.Group;
+	group: Group;
+	links: Group;
 	public hexes: HexMap = {};
 	constructor() {
 		this.group = new Group();
+		this.links = new Group();
+		this.group.add(this.links);
 	}
 
 	public static indexHash(coord : Vector2): string {
@@ -133,29 +142,24 @@ export class Field {
 		}
 	}
 
-	private triangles: Array<[number, Array<Hex>]> = [];
+	getTriangles(hex: Hex): Array<Triangle>{
+		const groups = groupBy(
+			this.hexArray
+				.filter(h => h.building === Building.Spacer && h !== hex)
+				.map(s => [s.group.position.clone().sub(hex.group.position), s] as [Vector3, Hex]),
+			h => h[0].length().toFixed(2).toString()
+		);
 
-	getTriangles(): Array<[number, Array<Hex>]>{
-		const triangles: Array<[number, Array<Hex>]> = [];
-		for(const row in this.spacers){
-			if (!this.spacers[row].length)
-				continue;
+		let triangles: Array<Triangle> = [];
 
-			const compareAxis = row[0] === 'x' ? 'y' : 'x';
-			
-			for(let i = 0; i < this.spacers[row].length; i++){
-				for(let j = i + 1; j < this.spacers[row].length; j++){
-					const distance = Math.abs(this.spacers[row][i].coord[compareAxis] - this.spacers[row][j].coord[compareAxis]);
-					const hits = this.spacers[row][j].adjacents(distance);
-					const completions = this.spacers[row][i].adjacents(distance).filter(h =>
-						(h.building === Building.Spacer)
-						&& hits.find(t => t === h)
-					);
-					for(const completion of completions){
-						triangles.push([distance, [this.spacers[row][i], this.spacers[row][j], completion]]);
-					}
-				}
-			}
+		for (const group in groups){
+			triangles = triangles.concat(crossMap(groups[group])
+				.filter(p => Math.abs(Math.PI / 3 - p[0][0].angleTo(p[1][0])) < 0.01)
+				.map(p => { return {
+					size: p[0][0].length() / (Hex.size * 2),
+					hexes: [hex, p[0][1], p[1][1]]
+				}})
+			);
 		}
 		return triangles;
 	}
@@ -206,7 +210,7 @@ export class Field {
 					const radius = (h[0][0].clone().add(h[1][0]));
 					return {
 						radius: radius,
-						center: this.realWorldHex(radius.add(hex.group.position)),
+						center: this.realWorldHex(radius.clone().add(hex.group.position)),
 					} as SuperHex
 				});
 
@@ -222,35 +226,36 @@ export class Field {
 		return this.hexes[Field.indexHash(new Vector2(x, y))];
 	}
 
-	private spacers: HexGroupMap = {};
-
-	modifySpacer(hex: Hex, add: boolean){
-		if (!add)
-			this.destroySuperHexes(hex);
-	}
-
 	build(building: Building, hex: Hex): any {
 		hex.building = building;
-		//this.disaster(hex);
+		this.disaster(hex);
 
 		for(const hex of this.hexArray){
-			if (hex.building === Building.Spacer)
-				hex.boost = 0;
 			hex.reinforced = false;
 		}
 
-		this.createSuperHexes(hex);
 		for(const hex in this.superHexes){
 			this.superHexes[hex].center.reinforced = true;
-			for(const subject of this.adjacents(this.superHexes[hex].center, this.superHexes[hex].radius.length() / Hex.radius / 2 + 1 | 0)){
+			for(const subject of this.adjacents(this.superHexes[hex].center, this.superHexes[hex].radius.length() / (Hex.size * 2) + 1 | 0)){
 				subject.reinforced = true;
 			}
 		}
+	}
 
-		for(const triangle of this.getTriangles()){
-			for(const hex of triangle[1]){
-				hex.boost = Math.max(hex.boost, triangle[0] / 2 | 0);
-			}
+	showLinks(hex: Hex){
+		for (const triangle of this.getTriangles(hex)){
+			const geometry = new Geometry();
+			geometry.vertices.push(triangle.hexes[0].group.position);
+			geometry.vertices.push(triangle.hexes[1].group.position);
+			geometry.vertices.push(triangle.hexes[2].group.position);
+			geometry.vertices.push(triangle.hexes[0].group.position);
+			this.links.add(new Line(geometry, new LineBasicMaterial( { color: 0xffffff, linewidth: 3 } )))
 		}
+	}
+
+	hideLinks(): any {
+		const children = [].concat(this.links.children);
+		for(const child of children)
+			this.links.remove(child);
 	}
 }

@@ -1,8 +1,7 @@
 import { Vector2, MeshBasicMaterial, Group, CircleGeometry, Mesh, Object3D, Color } from "three";
 import { EventReceptor } from './Game';
-import { game } from "./index";
-import { textBlock } from '../styles/main.sass';
-import { Field } from './Field';
+import { game, tryRemove } from './index';
+import { Field, Triangle } from './Field';
 
 export enum Building{
 	None,
@@ -12,6 +11,7 @@ export enum Building{
 }
 
 export class Hex implements EventReceptor{
+
 	public static readonly radius: number = 0.3;
 	public static readonly gapPercent: number = 0.9;
 	public static readonly size: number = Math.sqrt(3 * (Hex.radius * Hex.radius) / 4);
@@ -27,6 +27,7 @@ export class Hex implements EventReceptor{
 		})
 	);
 
+	triangles: Array<Triangle> = [];
 	material: THREE.MeshBasicMaterial;
 	geometry: THREE.CircleGeometry;
 	mesh: THREE.Mesh;
@@ -64,16 +65,36 @@ export class Hex implements EventReceptor{
 			return;
 
 		if (this._building === Building.Spacer){
-			this.field.modifySpacer(this, false);
+			this.field.destroySuperHexes(this);
+			for(const triangle of this.triangles){
+				for(const vertex of triangle.hexes){
+					if (vertex !== this){
+						vertex.removeTriangle(triangle);
+					}
+				}
+			}
+			this.triangles = [];
+			this.boost = 0;
 		}
-
+		
 		this._building = value;
-
+		
 		if (this._building === Building.Spacer){
-			this.field.modifySpacer(this, true);
+			this.field.createSuperHexes(this);
+			this.addTriangles(this.field.getTriangles(this));
 		}
 	}
 
+	removeTriangle(triangle: Triangle){
+		if(!tryRemove(this.triangles, triangle))
+			return;
+		if (this.getBoost(triangle) < this.boost)
+			return;
+		if (!this.triangles.length)
+			this.boost = 0;
+		else
+			this.boost = this.triangles.map(t => this.getBoost(t)).sort((a, b) => a - b)[0];
+	}
 
 	fractalLevel: number;
 	constructor(public coord: Vector2, private _solidity: number, private field: Field) {
@@ -167,10 +188,12 @@ export class Hex implements EventReceptor{
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.group.add(Hex.hover);
 		this.setText();
+		this.field.showLinks(this);
 	}
 
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.group.remove(Hex.hover);
+		this.field.hideLinks();
 	}
 
 	onClick(event: JQuery.Event<HTMLCanvasElement, null>){
@@ -179,6 +202,25 @@ export class Hex implements EventReceptor{
 		}else{
 			this.tryBuild(Building.Spacer);
 		}
+	}
+
+	addTriangles(triangles: Array<Triangle>){
+		for (const triangle of triangles){
+			this.addTriangle(triangle);
+			for (const vertex of triangle.hexes){
+				if (vertex !== this)
+					vertex.addTriangle(triangle);
+			}
+		}
+	}
+
+	addTriangle(triangle: Triangle) {
+		this.triangles.push(triangle);
+		this.boost = Math.max(this.boost, this.getBoost(triangle));
+	}
+
+	getBoost(triangle: Triangle) : number{
+		return triangle.size / 2 / (Hex.size * 2)  | 0;
 	}
 
 	private tryBuild(building: Building): boolean {
