@@ -52,12 +52,12 @@ export class Field {
 			return;
 
 		for(let i = 2, level = 1; level < 50 && i > 0; level++){
-			const items = this.origin.adjacents(level).filter(h => h.building !== Building.Tear && h.building !== Building.Origin);
+			const items = this.origin.adjacents(level).filter(h => h.vulnerable);
 			while(items.length){
 				const victim = random(items);
 				tryRemove(items, victim);
 				if(victim){
-					victim.building = Building.Tear;
+					victim.warp = 1;
 					if(--i <= 0)
 						break;
 				}
@@ -116,7 +116,7 @@ export class Field {
 			for(const vector of center.adjacentVectors(i))
 				this.createHex(vector);
 		}
-		const origin = random(center.adjacents(15));
+		const origin = random(center.adjacents(5));
 		if (origin){
 			origin.building = Building.Origin;
 			this.origin = origin;
@@ -246,6 +246,7 @@ export class Field {
 	build(building: Building, hex: Hex): any {
 		if(building != Building.None)
 			hex.building = building;
+
 		this.disaster();
 
 		for(const hex of this.hexArray){
