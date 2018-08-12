@@ -6,8 +6,8 @@ import { Field, Triangle } from './Field';
 export enum Building{
 	None,
 	Spacer,
-	Vacuum,
-	Singularity
+	Tear,
+	Origin
 }
 
 export class Hex implements EventReceptor{
@@ -15,7 +15,7 @@ export class Hex implements EventReceptor{
 	public static readonly gapPercent: number = 0.9;
 	public static readonly size: number = Math.sqrt(3 * (Hex.radius * Hex.radius) / 4);
 	public static readonly circumscribedRadius: number = Math.sqrt(3) / 3 * Hex.radius * Hex.gapPercent;
-	private static readonly buildingPrice = [0, 1, 1, 0];
+	private static readonly buildingPrice = [0, 1, 0];
 
 	public static readonly hover: Mesh = new Mesh(
 		new CircleGeometry(Hex.radius * Hex.gapPercent, 6),
@@ -41,7 +41,7 @@ export class Hex implements EventReceptor{
 	public get vulnerable(): boolean{
 		if (this.warp > 0)
 			return false;
-		if (this.building === Building.Singularity)
+		if (this.building === Building.Tear)
 			return false;
 		if (this.reinforced && this.building !== Building.Spacer)
 			return false;
@@ -59,7 +59,7 @@ export class Hex implements EventReceptor{
 		if (this._reinforced){
 			if(this.building === Building.None)
 				this.warp = 0;
-			if(this.building === Building.Singularity)
+			if(this.building === Building.Tear)
 				this.building = Building.None;
 		}
 	}
@@ -77,7 +77,7 @@ export class Hex implements EventReceptor{
 		if (this._building === value)
 			return;
 
-		if (this._building === Building.Singularity){
+		if (this._building === Building.Tear){
 			game.space++;
 		}
 
@@ -93,7 +93,7 @@ export class Hex implements EventReceptor{
 			this.triangles = [];
 			this.boost = 0;
 
-			if(value === Building.Singularity){
+			if(value === Building.Tear){
 				const anywhere = this.adjacents().find(h => h.building === Building.None);
 				if (anywhere)
 					anywhere.building = Building.Spacer;
@@ -136,7 +136,7 @@ export class Hex implements EventReceptor{
 		this.group.userData.eventReceptor = this;
 
 		if(Math.random() > 0.95)
-			this.building = Building.Singularity;
+			this.building = Building.Tear;
 	}
 
 	public set solidity(value: number){
@@ -152,14 +152,14 @@ export class Hex implements EventReceptor{
 		return this._solidity;
 	}
 
-	public radial(theta: number, distance: number): Hex {
+	public radial(theta: number, distance: number): Vector2 {
 		if (distance === 0)
-			return this;
+			return this.coord;
 		const direction = theta / distance | 0;
 		const rib = this.vector(this.coord, direction, distance).add(this.coord);
 		const location = this.vector(rib, (direction + 2) % 6, theta % distance).add(rib);
 
-		return this.field.hex(location.x, location.y);
+		return location;
 	}
 
 	createFractal(): Object3D {
@@ -175,9 +175,9 @@ export class Hex implements EventReceptor{
 	private internalColor(): Color{
 		if (this.building === Building.Spacer)
 			return new Color(0.8, 0.1, 0.2 + this.boost * 0.3);
-		else if (this.building === Building.Vacuum)
-			return new Color(0.2, 0.5, 0.2);
-		else if (this.building === Building.Singularity)
+		if (this.building === Building.Origin)
+			return new Color(0.8, 0.8, 0.0);
+		else if (this.building === Building.Tear)
 			return new Color(0.1, 0.1, 0.4);
 		return new Color(this.solidity, this.solidity, this.solidity);
 	}
@@ -238,7 +238,7 @@ export class Hex implements EventReceptor{
 			return false;
 		if (game.space < Hex.buildingPrice[building])
 			return false;
-		if (building === Building.Spacer && this.building === Building.Singularity){
+		if (building === Building.Spacer && this.building === Building.Tear){
 			if (!this.field.getSuperHexes(this).length)
 				return;
 		} else if (this.building !== Building.None)
@@ -265,14 +265,16 @@ export class Hex implements EventReceptor{
 		}
 	}
 
-	public adjacents(distance = 1) : Array<Hex>{
-		const adjacents: Array<Hex> = [];
+	public adjacentVectors(distance = 1): Array<Vector2>{
+		const adjacents: Array<Vector2> = [];
 		for (let i = 0; i < 6 * distance; i++){
-			const hex = this.radial(i, distance);
-			if (hex)
-				adjacents.push(hex);
+			adjacents.push(this.radial(i, distance))
 		}
 		return adjacents;
+	}
+
+	public adjacents(distance = 1) : Array<Hex>{
+		return this.adjacentVectors(distance).map(v => this.field.hex(v.x, v.y)).filter(h => h);
 	}
 
 	public update(){

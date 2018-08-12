@@ -5,6 +5,7 @@ import { Vector2, Raycaster, Box2, MeshBasicMaterial, BoxGeometry, WebGLRenderer
 import { flatten } from './index';
 import { UI } from './UI';
 import { canvas } from '../styles/main.sass';
+import { Hex } from './Hex';
 
 export interface EventReceptor{
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>);
@@ -57,13 +58,14 @@ export class Game {
 		var material = new MeshBasicMaterial({ color: 0x00ff00 });
 		this.cube = new Mesh(geometry, material);
 		this.field = new Field();
-		this.field.generate(this.viewBox);
+		this.field.generate();
 		this.scene.add(this.field.group);
 		this.clock = new Clock(true);
 
 		this.ui.spaceField.text(this.space);
 	}
 	private zoom: number = 20;
+	private readonly cameraRadiusLimit = Hex.size * 35 ;
 
 	private updateCamera(){
 		this.camera.left = -this.zoom / 2;
@@ -121,8 +123,10 @@ export class Game {
 					0
 				)
 			);
+
+			this.camera.position.clampLength(0, this.cameraRadiusLimit);
+
 			this.drag = newPosition;
-			this.field.generate(this.viewBox);
 		}
 	}
 
@@ -134,6 +138,7 @@ export class Game {
 
 	onMouseUp(event: JQuery.Event<HTMLElement, null>): any {
 		this.drag = null;
+		// alert('test');
 	}
 
 	onClick(event: JQuery.Event<HTMLCanvasElement, null>){
@@ -157,7 +162,6 @@ export class Game {
 		console.log('test');
 		this.zoom = target;
 		this.updateCamera();
-		this.field.generate(this.viewBox);
 	}
 	
 	private animate() {

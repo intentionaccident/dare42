@@ -39,7 +39,7 @@ export class Field {
 		for (const warp of this.hexArray.filter(h => h.warp > 0)){
 			if (--warp.warp > 0)
 				continue;
-			warp.building = Building.Singularity;
+			warp.building = Building.Tear;
 		}
 
 		const targets = this.hexArray.filter(h => h.vulnerable);
@@ -91,8 +91,9 @@ export class Field {
 		this.hexes[hex.indexHash] = hex;
 		this.group.add(hex.group);
 
-		if (Math.abs(coord.x) <= 0 && Math.abs(coord.y) <= 0)
+		if (Math.abs(coord.x) <= 0 && Math.abs(coord.y) <= 0){
 			this.build(Building.Spacer, hex);
+		}
 		return hex;
 	}
 
@@ -100,12 +101,15 @@ export class Field {
 		return this.hexes[Field.indexHash(new Vector2(x | 0, y | 0))];
 	}
 
-	public generate(area: THREE.Box2) {
-		for (let x = area.min.x / (Hex.size * 2) | 0; x <= (area.max.x / (Hex.size * 2) + 1 | 0); x++) {
-			for (let y = area.min.y / (Hex.size * 2) | 0; y <= (area.max.y / (Hex.size * 2) + 1 | 0); y++) {
-				this.createHex(new Vector2(x, y));
-			}
+	public generate() {
+		const center = this.createHex(new Vector2());
+		for(let i = 1; i <= 50; i++){
+			for(const vector of center.adjacentVectors(i))
+				this.createHex(vector);
 		}
+		const origin = random(center.adjacents(30));
+		if (origin)
+			origin.building = Building.Origin;
 	}
 
 	public adjacents(hex: Hex, distance = 1): Array<Hex>{
