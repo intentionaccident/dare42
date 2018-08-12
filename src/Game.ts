@@ -28,7 +28,7 @@ export class Game {
 	ui: UI;
 	hoverItem: EventReceptor | void;
 	clock: Clock;
-	space: number = 1000;
+	space: number = 10;
 	constructor() { }
 	public init() {
 		this.body = $(`<div/>`);
@@ -151,7 +151,7 @@ export class Game {
 
 	onScroll(event: JQuery.Event<Window, null>){
 		const realEvent = event.originalEvent as any;
-		const target = Math.min(20, Math.max(10, this.zoom+Math.min(5, realEvent.deltaY)));
+		const target = Math.min(40, Math.max(10, this.zoom+Math.min(5, realEvent.deltaY)));
 		if (target === this.zoom)
 			return;
 		console.log('test');

@@ -11,12 +11,11 @@ export enum Building{
 }
 
 export class Hex implements EventReceptor{
-
 	public static readonly radius: number = 0.3;
 	public static readonly gapPercent: number = 0.9;
 	public static readonly size: number = Math.sqrt(3 * (Hex.radius * Hex.radius) / 4);
 	public static readonly circumscribedRadius: number = Math.sqrt(3) / 3 * Hex.radius * Hex.gapPercent;
-	private static readonly buildingPrice = [0, 20, 20];
+	private static readonly buildingPrice = [0, 1, 1, 0];
 
 	public static readonly hover: Mesh = new Mesh(
 		new CircleGeometry(Hex.radius * Hex.gapPercent, 6),
@@ -64,6 +63,10 @@ export class Hex implements EventReceptor{
 		if (this._building === value)
 			return;
 
+		if (this._building === Building.Singularity){
+			game.space++;
+		}
+
 		if (this._building === Building.Spacer){
 			this.field.destroySuperHexes(this);
 			for(const triangle of this.triangles){
@@ -98,7 +101,6 @@ export class Hex implements EventReceptor{
 
 	fractalLevel: number;
 	constructor(public coord: Vector2, private _solidity: number, private field: Field) {
-		this.space = Math.random() * 300 | 0;
 		this.material = new MeshBasicMaterial({
 			color: this.color,
 			opacity: 0.5,
@@ -112,27 +114,9 @@ export class Hex implements EventReceptor{
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.group.add(this.mesh);
 		this.group.userData.eventReceptor = this;
-		this.fractalise();
-	}
 
-	private fractalise(): void {
-		const level = Math.min(6, this.space / 50 | 0);
-		if (this.fractalLevel === level)
-			return;
-		this.fractalLevel = level;
-
-		if (this.fractal) {
-			this.group.remove(this.fractal);
-			this.fractal = null;
-		}
-
-		this.fractal = new Group();
-		for (let i = this.fractalLevel; i > 0; i--) {
-			const fractal = this.createFractal();
-			fractal.rotateZ((i - 1) * Math.PI * 2 / 6);
-			this.fractal.add(fractal);
-		}
-		this.group.add(this.fractal);
+		if(Math.random() > 0.95)
+			this.building = Building.Singularity;
 	}
 
 	public set solidity(value: number){
@@ -226,9 +210,13 @@ export class Hex implements EventReceptor{
 	private tryBuild(building: Building): boolean {
 		if (this.solidity < 0.9)
 			return false;
-		if (this.building !== Building.None)
-			return false;
 		if (game.space < Hex.buildingPrice[building])
+			return false;
+		if (building === Building.Spacer && this.building === Building.Singularity){
+			console.log('test');
+			if (!this.field.getSuperHexes(this).length)
+				return;
+		} else if (this.building !== Building.None)
 			return false;
 		game.space -= Hex.buildingPrice[building];
 		this.field.build(building, this);
@@ -264,7 +252,6 @@ export class Hex implements EventReceptor{
 
 	public update(){
 		this.material.color = this.color;
-		this.fractalise();
 		this.setText();
 	}
 

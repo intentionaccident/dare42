@@ -182,7 +182,7 @@ export class Field {
 		}
 	}
 
-	createSuperHexes(hex: Hex){
+	getSuperHexes(hex: Hex): Array<SuperHex>{
 		const groups = groupBy(
 			this.hexArray
 				.filter(h => h.building === Building.Spacer && h !== hex)
@@ -190,10 +190,10 @@ export class Field {
 			h => h[0].length().toFixed(2).toString()
 		);
 
+		let superHexes = [];
+
 		for (const group in groups){
-			// console.log(group);
-			// console.log();
-			const newHexes = crossMap(groups[group])
+			superHexes = superHexes.concat(crossMap(groups[group])
 				.filter(p => Math.abs(Math.PI * 2 / 3 - p[0][0].angleTo(p[1][0])) < 0.01)
 				.filter(h => {
 					let test = hex.group.position.clone().add(h[0][0]).add(h[1][0]).add(h[0][0]);
@@ -212,11 +212,15 @@ export class Field {
 						radius: radius,
 						center: this.realWorldHex(radius.clone().add(hex.group.position)),
 					} as SuperHex
-				});
+				})
+			);
+		}
+		return superHexes;
+	}
 
-			for(const hex of newHexes){
-				this.superHexes[hex.center.indexHash] = hex;
-			}
+	createSuperHexes(hex: Hex){
+		for(const foundHex of this.getSuperHexes(hex)){
+			this.superHexes[foundHex.center.indexHash] = foundHex;
 		}
 	}
 
