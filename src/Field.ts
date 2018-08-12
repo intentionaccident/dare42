@@ -8,7 +8,7 @@ export interface HexMap{
 
 export class Field {
 	private danger: number = 0;
-	disaster(){
+	disaster(untouchable: Hex){
 		this.disasterCount--;
 		if (this.disasterCount > 0)
 			return;
@@ -17,13 +17,13 @@ export class Field {
 			const singularity = random(this.hexArray.filter(h => h.building === Building.Singularity))
 			if (!singularity)
 				break;
-			const target = random(singularity.adjacents().filter(a => a.vulnerable));
+			const target = random(singularity.adjacents().filter(a => a.vulnerable && a !== untouchable));
 			if (!target)
 				continue;
 			target.building = Building.Singularity;
 		}
 		
-		const hex = random(this.hexArray.filter(h => h.vulnerable));
+		const hex = random(this.hexArray.filter(h => h.vulnerable && h !== untouchable));
 		if (hex) {
 			hex.building = Building.Singularity;
 		}
@@ -217,7 +217,7 @@ export class Field {
 
 	build(building: Building, hex: Hex): any {
 		hex.building = building;
-		this.disaster();
+		this.disaster(hex);
 
 		for(const hex of this.hexArray){
 			if (hex.building === Building.Spacer)
