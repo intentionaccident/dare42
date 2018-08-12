@@ -36,24 +36,19 @@ export class Field {
 		if (this.disasterCount > 0)
 			return;
 
-		for (let events = this.danger; events > 0; events--){
-			const singularity = random(this.hexArray.filter(h => h.building === Building.Singularity))
-			if (!singularity)
-				break;
-			const target = random(singularity.adjacents().filter(a => a.vulnerable && a !== untouchable));
+		const targets = this.hexArray.filter(h => h.vulnerable && h !== untouchable);
+
+		for (let events = targets.length/40; events > 0; events--){
+			const target = random(targets);
 			if (!target)
-				continue;
+				break;
 			target.building = Building.Singularity;
-		}
-		
-		const hex = random(this.hexArray.filter(h => h.vulnerable && h !== untouchable));
-		if (hex) {
-			hex.building = Building.Singularity;
+			tryRemove(targets, target);
 		}
 
-		this.danger++;
+		// this.danger++;
 
-		this.disasterCount = 2;
+		this.disasterCount = 1;
 	}
 
 	disasterCount: number = 3;
@@ -255,6 +250,25 @@ export class Field {
 			geometry.vertices.push(triangle.hexes[0].group.position);
 			this.links.add(new Line(geometry, new LineBasicMaterial( { color: 0xffffff, linewidth: 3 } )))
 		}
+
+		for (const superHex of this.getSuperHexes(hex)){
+			const geometry = new Geometry();
+			const vertices = this.getVertices(superHex);
+			for(const vertex of vertices){
+				geometry.vertices.push(vertex);
+			}
+			geometry.vertices.push(vertices[0]);
+			this.links.add(new Line(geometry, new LineBasicMaterial( { color: 0xff00ff, linewidth: 6 } )))
+		}
+	}
+
+	getVertices(hex: SuperHex): Array<Vector3>{
+		const center = hex.center.group.position.clone();
+		const vertices: Array<Vector3> = [];
+		for (let i = 0; i <= 6; i++){
+			vertices.push(hex.radius.clone().applyAxisAngle(new Vector3(0, 0, 1), Math.PI * i / 3).add(center));
+		}
+		return vertices;
 	}
 
 	hideLinks(): any {

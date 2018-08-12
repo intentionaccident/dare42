@@ -204,7 +204,7 @@ export class Hex implements EventReceptor{
 	}
 
 	getBoost(triangle: Triangle) : number{
-		return triangle.size / 2 / (Hex.size * 2)  | 0;
+		return Math.log2(triangle.size / (Hex.size * 2)) | 0;
 	}
 
 	private tryBuild(building: Building): boolean {
