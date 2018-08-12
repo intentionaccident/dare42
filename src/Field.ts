@@ -33,7 +33,6 @@ export class Field {
 		this.disasterCount = 2;
 	}
 
-	solids: Array<Hex> = [];
 	disasterCount: number = 3;
 	smash(raycaster: Raycaster): Hex | void{
 		const intersect = raycaster.intersectObjects(flatten(this.hexArray.map(h => h.mesh)))[0];
@@ -58,8 +57,13 @@ export class Field {
 
 	private createHex(coord: Vector2): Hex {
 		const hex = new Hex(coord, Math.random() * 0.2 + 0.8 / (Math.pow(((Math.abs(coord.x) + Math.abs(coord.y))) / 6, 2) + 1), this);
-		this.hexes[Field.indexHash(hex.coord)] = hex;
+		if (hex.indexHash in this.hexes)
+			return;
+		this.hexes[hex.indexHash] = hex;
 		this.group.add(hex.group);
+
+		if (coord.x === 0 && coord.y === 0)
+			this.build(Building.Spacer, this.hex(0, 0));
 		return hex;
 	}
 
@@ -72,13 +76,6 @@ export class Field {
 			for (let y = area.min.y / (Hex.size * 2) | 0; y <= (area.max.y / (Hex.size * 2) + 1 | 0); y++) {
 				this.createHex(new Vector2(x, y));
 			}
-		}
-
-		this.build(Building.Spacer, this.hex(0, 0));
-
-		for(const hex of this.hexArray){
-			if (hex.solidity > 0.5)
-				this.solids.push(hex);
 		}
 	}
 
@@ -143,8 +140,6 @@ export class Field {
 		return triangles;
 	}
 
-
-
 	getHexes(): SuperHexMap{
 		const hexes: SuperHexMap = {};
 		for(const row in this.spacers){
@@ -157,7 +152,6 @@ export class Field {
 					if (Math.abs(distance % 2 | 0) === 1)
 						continue;
 					distance = distance / 2 | 0;
-					console.log(distance);
 
 					const test = this.hex(
 						this.spacers[row][i].coord.x + distance,
@@ -165,8 +159,6 @@ export class Field {
 					);
 
 					distance = Math.abs(distance);
-
-					console.log(test);
 
 					if (!test || test.indexHash in hexes)
 						continue;
@@ -244,8 +236,6 @@ export class Field {
 export interface Buildings{
 	[key: string]: number;
 }
-
-
 
 interface HexGroupMap{
 	[key: string]: Array<Hex>;
