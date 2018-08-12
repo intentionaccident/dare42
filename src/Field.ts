@@ -43,16 +43,12 @@ export class Field {
 		}
 
 		const targets = this.hexArray.filter(h => h.vulnerable);
-		// console.log(this.hexArray);
-		console.log(targets);
 
 		for (let events = targets.length/60 + 1; events > 0; events--){
 			const target = random(targets);
 			if (!target){
 				break;
 			}
-			if(target.boost > 0)
-				console.log(target);
 			target.warp = 1;
 			tryRemove(targets, target);
 		}
@@ -95,7 +91,7 @@ export class Field {
 		this.hexes[hex.indexHash] = hex;
 		this.group.add(hex.group);
 
-		if (Math.abs(coord.x) <= 1 && Math.abs(coord.y) <= 1)
+		if (Math.abs(coord.x) <= 0 && Math.abs(coord.y) <= 0)
 			this.build(Building.Spacer, hex);
 		return hex;
 	}
