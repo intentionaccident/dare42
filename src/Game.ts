@@ -11,7 +11,7 @@ export interface EventReceptor{
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>);
 	onMouseOut(event: JQuery.Event<HTMLCanvasElement, null>);
 	onClick(event: JQuery.Event<HTMLCanvasElement, null>);
-	update();
+	update(delta: number);
 }
 
 export class Game {
@@ -169,7 +169,7 @@ export class Game {
 	update(delta: number): any {
 		this.field.update(delta);
 		if (this.hoverItem)
-			this.hoverItem.update();
+			this.hoverItem.update(delta);
 	}
 
 	started: boolean = false;

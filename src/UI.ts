@@ -12,17 +12,17 @@ interface Email{
 export class UI {
 	email: JQuery<HTMLElement>;
 	ui: JQuery<HTMLElement>;
+	textBox: JQuery<HTMLElement>;
 	emails: {[subject:string]: Email} = {};
 	constructor(private body: JQuery<HTMLElement>, private canvas: JQuery<HTMLElement>) {
 		this.ui = $(`<div class="${styles.ui}">
 			<div class="email ${styles.button}">Email</div>
-			<div class="${styles.space}"/>
+			<div class="${styles.text}"/>
 			<div class="wait ${styles.button}">Wait</div>
 		</div>`);
+		this.textBox = this.ui.find('.' + styles.text);
 
 		this.body.append(this.ui);
-
-		console.log('tet');
 
 		this.email = $(`
 			<div class="${styles.email}">
@@ -71,7 +71,7 @@ export class UI {
 			subject: "ALERT: SPATIAL INSTABILITY",
 			sender: "Automated Alert Watchdog",
 			body: "ANOMALY DETECTED<br />\
-				Instability in spacetime detected around <span style='color:yellow'>Uroboros Testing Station EM-32.</span><br />\
+				Instability in spacetime detected around <span style='color:yellow'>Uroboros Research Station EM-32.</span><br />\
 				Ongoing space manipulation projects are to be suspended.<br />\
 				All personel to evacuate immediately.<br />\
 				EOM"

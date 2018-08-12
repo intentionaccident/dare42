@@ -17,10 +17,13 @@ export class Hex implements EventReceptor{
 	public static readonly circumscribedRadius: number = Math.sqrt(3) / 3 * Hex.radius * Hex.gapPercent;
 	private static readonly buildingPrice = [0, 1, 0];
 
+	public static readonly hoverGoodColor: Color = new Color(0x2222ff);
+	public static readonly hoverBadColor: Color = new Color(0xff2222);
+
 	public static readonly hover: Mesh = new Mesh(
 		new CircleGeometry(Hex.radius * Hex.gapPercent, 6),
 		new MeshBasicMaterial({
-			color: 0x4444ff,
+			color: Hex.hoverGoodColor,
 			opacity: 0.7,
 			transparent: true
 		})
@@ -37,6 +40,8 @@ export class Hex implements EventReceptor{
 
 	warp: number = 0;
 	private _reinforced: boolean = false;
+	dither: number;
+	warpMaterial: MeshBasicMaterial;
 
 	public get vulnerable(): boolean{
 		if (this.warp > 0)
@@ -124,17 +129,32 @@ export class Hex implements EventReceptor{
 
 	fractalLevel: number;
 	constructor(public coord: Vector2, private _solidity: number, private field: Field) {
+		this.dither = Math.random();
+
 		this.material = new MeshBasicMaterial({
-			color: this.color,
-			opacity: 0.5,
-			transparent: true
+			color: this.color
 		});
+
 		this.group = new Group();
 		this.group.position.x = Hex.size * ((this.coord.x | 0) * 2 + Math.abs(this.coord.y % 2));
 		this.group.position.y = Hex.radius * (this.coord.y | 0) * 1.5;
 		this.group.rotateZ(Math.PI / 6);
 		this.geometry = new CircleGeometry(Hex.radius * Hex.gapPercent, 6);
 		this.mesh = new Mesh(this.geometry, this.material);
+
+		this.warpMaterial = new MeshBasicMaterial({
+			color: new Color(0, 0, 1),
+			transparent: true,
+			opacity: 0
+		});
+		
+		const mesh = new Mesh(
+			new CircleGeometry(Hex.radius * Hex.gapPercent, 6),
+			this.warpMaterial
+		);
+		mesh.position.z++;
+		this.group.add(mesh);
+
 		this.group.add(this.mesh);
 		this.group.userData.eventReceptor = this;
 
@@ -177,24 +197,31 @@ export class Hex implements EventReceptor{
 
 	private internalColor(): Color{
 		if (this.building === Building.Spacer)
-			return new Color(0.8, 0.1, 0.2 + this.boost * 0.3);
+			return new Color(Math.min(1, 0.5 + 0.1 * this.boost), 0, 0.6)
 		if (this.building === Building.Origin)
 			return new Color(0.8, 0.8, 0.0);
-		else if (this.building === Building.Tear)
-			return new Color(0.1, 0.1, 0.4);
-		return new Color(this.solidity, this.solidity, this.solidity);
+		else if (this.building === Building.Tear){
+			return new Color(0.1, 0.1, 1);
+		}
+		return new Color(1, 0.90, 1);
 	}
 
 	public get color(): Color {
 		const color = this.internalColor();
-		if(this.warp > 0)
-			color.multiply(new Color(0.0, 0.4, 0.0).multiplyScalar(1 + this.warp));
-		if (!this.reinforced)
-			color.multiplyScalar(0.5);
+		if(this.building === Building.None || this.building === Building.Spacer){
+			color.multiplyScalar(0.05 + this.dither * 0.05 + 0.9 * this.solidity);
+			if (!this.reinforced)
+				color.multiplyScalar(0.7);
+		} else {
+			if (game.clock)
+				color.multiplyScalar(0.20 + (Math.sin(Math.PI * (game.clock.elapsedTime + this.dither * 2) / 3) + 1) * 3 / 20);
+		}
 		return color;
 	}
 
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
+		this.setText();
+		(Hex.hover.material as any).color = this.canBuild() ? Hex.hoverGoodColor : Hex.hoverBadColor;
 		this.group.add(Hex.hover);
 		this.field.showLinks(this);
 	}
@@ -218,10 +245,6 @@ export class Hex implements EventReceptor{
 		}
 	}
 
-	toString(): string{
-		return `[${this.coord.x}, ${this.coord.y}] warp: ${this.warp} building ${Building[this.building]}`;
-	}
-
 	addTriangle(triangle: Triangle) {
 		this.triangles.push(triangle);
 		this.boost = Math.max(this.boost, this.getBoost(triangle));
@@ -231,16 +254,20 @@ export class Hex implements EventReceptor{
 		return Math.log2(triangle.size / (Hex.size * 2)) | 0;
 	}
 
-	private tryBuild(building: Building): boolean {
+	private canBuild(){
 		if (this.solidity < 0.9)
 			return false;
-		if (building === Building.Spacer && this.building === Building.Tear){
+		if (this.building === Building.Tear){
 			if (!this.field.getSuperHexes(this).length)
 				return;
 		} else if (this.building !== Building.None)
 			return false;
-		this.field.build(building, this);
 		return true;
+	}
+
+	private tryBuild(building: Building) {
+		if(this.canBuild())
+			this.field.build(building, this);
 	}
 
 	public vector(vector: Vector2, theta: number, distance: number): Vector2{
@@ -272,7 +299,45 @@ export class Hex implements EventReceptor{
 		return this.adjacentVectors(distance).map(v => this.field.hex(v.x, v.y)).filter(h => h);
 	}
 
-	public update(){
+	public update(delta: number){
 		this.material.color = this.color;
+		if (game.clock && this.warp > 0){
+			this.warpMaterial.opacity = 0.20 + (Math.sin(Math.PI * (game.clock.elapsedTime) * 3) + 1) / 3;
+		}
+	}
+
+	public setText(){
+		let text = "";
+		let color = 'white'
+
+		switch(this.building){
+			case Building.Tear:
+				color = 'blue';
+				text += "Spatial Anomaly";
+				break;
+			case Building.Spacer:
+				color = 'purple';
+				text += `Level ${this.boost + 1} Spacer`;
+				break;
+			case Building.Origin:
+				color = 'yellow';
+				text += `EM-32 Research Station`;
+				break;
+			case Building.None:
+				if (this.reinforced)
+					text += "Reinforced "
+				else if (this.solidity === 0)
+					text += "Collapsed "
+				text += `Space `;
+				break;
+		}
+
+		if (this.warp > 0){
+			text += `<span style="color: LightBlue">[WARPING]</span>`
+		}
+
+		game.ui.textBox.html(
+			`<span style="color: ${color}">${text}</span>`
+		)
 	}
 }

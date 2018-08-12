@@ -1,5 +1,5 @@
 import { Hex, Building } from './Hex';
-import { Vector2, Group, Raycaster, Vector3, Quaternion, Line, Geometry, LineBasicMaterial, WrapAroundEnding } from 'three';
+import { Vector2, Group, Raycaster, Vector3, Quaternion, Line, Geometry, LineBasicMaterial, WrapAroundEnding, Color } from 'three';
 import { flatten, game, tryRemove, random, groupBy, crossMap } from './index';
 
 export interface HexMap{
@@ -81,6 +81,7 @@ export class Field {
 		this.group = new Group();
 		this.links = new Group();
 		this.group.add(this.links);
+		Hex.hover.position.z++;
 	}
 
 	public static indexHash(coord : Vector2): string {
@@ -152,9 +153,11 @@ export class Field {
 					break;
 				}
 			}
-			building.update();
 		}
 
+		for(const hex of this.hexArray)
+			hex.update(delta);
+		
 		if(!this.hexArray.some(h => h.solidity > 0 && h.building === Building.None)){
 			game.ui.gameOver(false);
 		}
@@ -273,7 +276,9 @@ export class Field {
 			geometry.vertices.push(triangle.hexes[1].group.position);
 			geometry.vertices.push(triangle.hexes[2].group.position);
 			geometry.vertices.push(triangle.hexes[0].group.position);
-			this.links.add(new Line(geometry, new LineBasicMaterial( { color: 0xffffff, linewidth: 3 } )))
+			const lines = new Line(geometry, new LineBasicMaterial( { color: new Color(0.8, 0, 1), linewidth: 3 } ));
+			lines.position.z++;
+			this.links.add(lines)
 		}
 
 		for (const superHex of this.getSuperHexes(hex)){
@@ -283,7 +288,9 @@ export class Field {
 				geometry.vertices.push(vertex);
 			}
 			geometry.vertices.push(vertices[0]);
-			this.links.add(new Line(geometry, new LineBasicMaterial( { color: 0xff00ff, linewidth: 6 } )))
+			const lines = new Line(geometry, new LineBasicMaterial( { color: new Color(1, 0, 0.6), linewidth: 6 } ));
+			lines.position.z++;
+			this.links.add(lines);
 		}
 	}
 
