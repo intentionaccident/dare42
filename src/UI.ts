@@ -1,5 +1,6 @@
 import styles from '../styles/main.sass';
 import $ from 'jquery';
+import { game } from './index';
 
 interface Email{
 	subject: string;
@@ -8,13 +9,14 @@ interface Email{
 }
 
 export class UI {
-
 	email: JQuery<HTMLElement>;
 	ui: JQuery<HTMLElement>;
 	emails: {[subject:string]: Email} = {};
 	constructor(body: JQuery<HTMLElement>, private canvas: JQuery<HTMLElement>) {
 		this.ui = $(`<div class="${styles.ui}">
-			<div class="email">Email</div>
+			<div class="email ${styles.button}">Email</div>
+			<div class="${styles.space}"/>
+			<div class="wait ${styles.button}">Wait</div>
 		</div>`);
 
 		body.append(this.ui);
@@ -44,6 +46,11 @@ export class UI {
 
 		this.email.find(`.${styles.exit}`).click(e => this.closeEmail())
 		this.ui.find('.email').click(e => this.openEmail())
+		this.ui.find('.wait').click(e => {
+			this.closeEmail();
+			game.wait();
+		});
+
 		this.email.hide();
 		this.canvas.append(this.email);
 
@@ -69,6 +76,7 @@ export class UI {
 	}
 
 	closeEmail() {
+		game.start();
 		this.email.hide();
 		this.ui.find('.email').removeClass(styles.selected);
 	}

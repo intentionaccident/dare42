@@ -200,11 +200,7 @@ export class Hex implements EventReceptor{
 	}
 
 	onClick(event: JQuery.Event<HTMLCanvasElement, null>){
-		if(event.ctrlKey){
-			this.field.build(Building.None, this);
-		}else{
-			this.tryBuild(Building.Spacer);
-		}
+		this.tryBuild(Building.Spacer);
 	}
 
 	addTriangles(triangles: Array<Triangle>){

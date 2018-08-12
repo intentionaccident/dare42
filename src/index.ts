@@ -47,5 +47,4 @@ export var game : Game;
 $(() => {
 	game = new Game();
 	game.init();
-	game.start();
 });

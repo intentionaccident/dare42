@@ -92,7 +92,7 @@ export class Field {
 	}
 
 	private createHex(coord: Vector2): Hex {
-		const hex = new Hex(coord, Math.random() * 0.2 + 0.8 / (Math.pow(((Math.abs(coord.x) + Math.abs(coord.y))) / 6, 2) + 1), this);
+		const hex = new Hex(coord, Math.random() * 0.4 + 0.6 / (Math.pow(((Math.abs(coord.x) + Math.abs(coord.y))) / 6, 2) + 1), this);
 		if (hex.indexHash in this.hexes)
 			return;
 		this.hexes[hex.indexHash] = hex;
@@ -244,7 +244,7 @@ export class Field {
 	}
 
 	build(building: Building, hex: Hex): any {
-		if(building != Building.None)
+		if(building !== Building.None)
 			hex.building = building;
 
 		this.disaster();

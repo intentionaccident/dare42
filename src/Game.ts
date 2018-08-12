@@ -5,7 +5,7 @@ import { Vector2, Raycaster, Box2, MeshBasicMaterial, BoxGeometry, WebGLRenderer
 import { flatten } from './index';
 import { UI } from './UI';
 import { canvas } from '../styles/main.sass';
-import { Hex } from './Hex';
+import { Hex, Building } from './Hex';
 
 export interface EventReceptor{
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>);
@@ -60,6 +60,7 @@ export class Game {
 		this.field.generate();
 		this.scene.add(this.field.group);
 		this.clock = new Clock(true);
+		this.renderer.render(this.scene, this.camera);
 	}
 	private zoom: number = 20;
 	private readonly cameraRadiusLimit = Hex.size * 35 ;
@@ -171,7 +172,15 @@ export class Game {
 			this.hoverItem.update();
 	}
 
+	started: boolean = false;
 	public start() {
+		if(this.started)
+			return;
+		this.started = true;
 		this.animate();
+	}
+
+	wait(): any {
+		this.field.build(Building.None, null);
 	}
 }
