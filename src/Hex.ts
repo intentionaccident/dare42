@@ -34,10 +34,20 @@ export class Hex implements EventReceptor{
 	group: THREE.Group;
 	fractal: THREE.Group;
 	boost: number = 0;
-	private _reinforced: boolean;
+
+	warp: number = 0;
+	private _reinforced: boolean = false;
 
 	public get vulnerable(): boolean{
-		return this.building !== Building.Singularity && !this.reinforced && this.solidity >= 1;
+		if (this.warp > 0)
+			return false;
+		if (this.building === Building.Singularity)
+			return false;
+		if (this.reinforced && this.building !== Building.Spacer)
+			return false;
+		if (this.solidity < 1)
+			return false;
+		return true;
 	}
 
 	public get reinforced(): boolean {
@@ -46,8 +56,12 @@ export class Hex implements EventReceptor{
 
 	public set reinforced(value: boolean) {
 		this._reinforced = value;
-		if (this._reinforced && this.building === Building.Singularity)
-			this.building = Building.None;
+		if (this._reinforced){
+			if(this.building === Building.None)
+				this.warp = 0;
+			if(this.building === Building.Singularity)
+				this.building = Building.None;
+		}
 	}
 
 	private _building: Building = Building.None;
@@ -78,6 +92,12 @@ export class Hex implements EventReceptor{
 			}
 			this.triangles = [];
 			this.boost = 0;
+
+			if(value === Building.Singularity){
+				const anywhere = this.adjacents().find(h => h.building === Building.None);
+				if (anywhere)
+					anywhere.building = Building.Spacer;
+			}
 		}
 		
 		this._building = value;
@@ -164,6 +184,8 @@ export class Hex implements EventReceptor{
 
 	public get color(): Color {
 		const color = this.internalColor();
+		if(this.warp > 0)
+			color.multiply(new Color(0.0, 0.4, 0.0).multiplyScalar(1 + this.warp));
 		if (!this.reinforced)
 			color.multiplyScalar(0.5);
 		return color;
@@ -182,7 +204,7 @@ export class Hex implements EventReceptor{
 
 	onClick(event: JQuery.Event<HTMLCanvasElement, null>){
 		if(event.ctrlKey){
-			this.tryBuild(Building.Vacuum);
+			this.field.build(Building.None, this);
 		}else{
 			this.tryBuild(Building.Spacer);
 		}
@@ -196,6 +218,10 @@ export class Hex implements EventReceptor{
 					vertex.addTriangle(triangle);
 			}
 		}
+	}
+
+	toString(): string{
+		return `[${this.coord.x}, ${this.coord.y}] warp: ${this.warp} building ${Building[this.building]}`;
 	}
 
 	addTriangle(triangle: Triangle) {
@@ -213,7 +239,6 @@ export class Hex implements EventReceptor{
 		if (game.space < Hex.buildingPrice[building])
 			return false;
 		if (building === Building.Spacer && this.building === Building.Singularity){
-			console.log('test');
 			if (!this.field.getSuperHexes(this).length)
 				return;
 		} else if (this.building !== Building.None)
@@ -256,6 +281,6 @@ export class Hex implements EventReceptor{
 	}
 
 	private setText(){
-		game.ui.textBlock.text(`Space: ${this.space}; Solidity: ${this.solidity * 100 | 0}%; Building: ${Building[this.building]}`)
+		game.ui.textBlock.text(`Reinforced: ${this.reinforced}; Solidity: ${this.solidity * 100 | 0}%; Building: ${Building[this.building]}, Warp ${this.warp}`)
 	}
 }

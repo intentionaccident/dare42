@@ -32,17 +32,28 @@ interface SuperHexMap{
 export class Field {
 	private danger: number = 0;
 	disaster(untouchable: Hex){
-		this.disasterCount--;
-		if (this.disasterCount > 0)
-			return;
+		// this.disasterCount--;
+		// if (this.disasterCount > 0)
+		// 	return;
 
-		const targets = this.hexArray.filter(h => h.vulnerable && h !== untouchable);
+		for (const warp of this.hexArray.filter(h => h.warp > 0)){
+			if (--warp.warp > 0)
+				continue;
+			warp.building = Building.Singularity;
+		}
 
-		for (let events = targets.length/40; events > 0; events--){
+		const targets = this.hexArray.filter(h => h.vulnerable);
+		// console.log(this.hexArray);
+		console.log(targets);
+
+		for (let events = targets.length/60 + 1; events > 0; events--){
 			const target = random(targets);
-			if (!target)
+			if (!target){
 				break;
-			target.building = Building.Singularity;
+			}
+			if(target.boost > 0)
+				console.log(target);
+			target.warp = 1;
 			tryRemove(targets, target);
 		}
 
@@ -84,8 +95,8 @@ export class Field {
 		this.hexes[hex.indexHash] = hex;
 		this.group.add(hex.group);
 
-		if (coord.x === 0 && coord.y === 0)
-			this.build(Building.Spacer, this.hex(0, 0));
+		if (Math.abs(coord.x) <= 1 && Math.abs(coord.y) <= 1)
+			this.build(Building.Spacer, hex);
 		return hex;
 	}
 
@@ -121,7 +132,8 @@ export class Field {
 
 		for(const building of buildings){
 			switch(building.building){
-				case Building.Spacer: {
+				case Building.Spacer:{
+					building.solidity += 1 * delta;
 					for (const hex of this.adjacents(building, 2 + building.boost)){
 						hex.solidity += 1 * delta;
 					}
@@ -173,7 +185,7 @@ export class Field {
 		}
 
 		for(const hex of brokenHexes){
-			this.superHexes[hex] = null;
+			delete this.superHexes[hex];
 		}
 	}
 
@@ -226,7 +238,8 @@ export class Field {
 	}
 
 	build(building: Building, hex: Hex): any {
-		hex.building = building;
+		if(building != Building.None)
+			hex.building = building;
 		this.disaster(hex);
 
 		for(const hex of this.hexArray){
