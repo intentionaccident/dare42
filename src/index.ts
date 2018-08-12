@@ -27,6 +27,21 @@ export function random<T>(array: Array<T>): T | void{
 	return array[Math.random() * array.length | 0];
 }
 
+export function groupBy<T>(array: Array<T>, callback: (item: T) => string): {[key: string]: Array<T>} {
+	return array.reduce((rv, x) => {
+		(rv[callback(x)] = rv[callback(x)] || []).push(x);
+		return rv;
+	}, {});
+}
+
+export function crossMap<T>(array: Array<T>): Array<Array<T>> {
+	const result: Array<Array<T>> = [];
+	for(let i = 0; i < array.length; i++)
+		for(let j = i; j < array.length; j++)
+			result.push([array[i], array[j]]);
+	return result;
+}
+
 export var game : Game;
 
 $(() => {

@@ -175,9 +175,9 @@ export class Hex implements EventReceptor{
 
 	onClick(event: JQuery.Event<HTMLCanvasElement, null>){
 		if(event.ctrlKey){
-			this.tryBuild(Building.Spacer);
-		}else{
 			this.tryBuild(Building.Vacuum);
+		}else{
+			this.tryBuild(Building.Spacer);
 		}
 	}
 

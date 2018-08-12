@@ -143,7 +143,7 @@ export class Game {
 			eventReceptor.onClick(event);
 	}
 
-	onScroll(event: JQuery.Event<HTMLCanvasElement, null>){
+	onScroll(event: JQuery.Event<Window, null>){
 		const realEvent = event.originalEvent as any;
 		const target = Math.min(20, Math.max(10, this.zoom+Math.min(5, realEvent.deltaY)));
 		if (target === this.zoom)

@@ -1,10 +1,28 @@
 import { Hex, Building } from './Hex';
-import { Vector2, Group, Raycaster } from 'three';
-import { flatten, game, tryRemove, random } from './index';
+import { Vector2, Group, Raycaster, Vector3, Quaternion } from 'three';
+import { flatten, game, tryRemove, random, groupBy, crossMap } from './index';
 
 export interface HexMap{
 	[hash: string]: Hex;
 }
+
+interface SuperHex{
+	center: Hex;
+	radius: Vector3;
+}
+
+export interface Buildings{
+	[key: string]: number;
+}
+
+interface HexGroupMap{
+	[key: string]: Array<Hex>;
+}
+
+interface SuperHexMap{
+	[key: string]: SuperHex;
+}
+
 
 export class Field {
 	private danger: number = 0;
@@ -115,6 +133,8 @@ export class Field {
 		}
 	}
 
+	private triangles: Array<[number, Array<Hex>]> = [];
+
 	getTriangles(): Array<[number, Array<Hex>]>{
 		const triangles: Array<[number, Array<Hex>]> = [];
 		for(const row in this.spacers){
@@ -140,76 +160,78 @@ export class Field {
 		return triangles;
 	}
 
-	getHexes(): SuperHexMap{
-		const hexes: SuperHexMap = {};
-		for(const row in this.spacers){
-			if (row[0] === 'x' || !this.spacers[row].length)
+	private superHexes: SuperHexMap = {};
+
+	destroySuperHexes(hex: Hex){
+		const brokenHexes: Array<string> = [];
+		for(const superHex in this.superHexes){
+			const direction = this.superHexes[superHex].center.group.position.clone().sub(hex.group.position);
+			if (Math.abs(direction.length() - this.superHexes[superHex].radius.length()) >= 0.01)
 				continue;
-			
-			for(let i = 0; i < this.spacers[row].length; i++){
-				for(let j = i + 1; j < this.spacers[row].length; j++){
-					let distance = (this.spacers[row][j].coord.x - this.spacers[row][i].coord.x);
-					if (Math.abs(distance % 2 | 0) === 1)
-						continue;
-					distance = distance / 2 | 0;
+			if (direction.angleTo(this.superHexes[superHex].radius) % (Math.PI / 3) >= 0.01)
+				continue;
+			brokenHexes.push(superHex);
+		}
 
-					const test = this.hex(
-						this.spacers[row][i].coord.x + distance,
-						this.spacers[row][i].coord.y
-					);
+		for(const hex of brokenHexes){
+			this.superHexes[hex] = null;
+		}
+	}
 
-					distance = Math.abs(distance);
+	createSuperHexes(hex: Hex){
+		const groups = groupBy(
+			this.hexArray
+				.filter(h => h.building === Building.Spacer && h !== hex)
+				.map(s => [s.group.position.clone().sub(hex.group.position), s] as [Vector3, Hex]),
+			h => h[0].length().toFixed(2).toString()
+		);
 
-					if (!test || test.indexHash in hexes)
-						continue;
+		for (const group in groups){
+			// console.log(group);
+			// console.log();
+			const newHexes = crossMap(groups[group])
+				.filter(p => Math.abs(Math.PI * 2 / 3 - p[0][0].angleTo(p[1][0])) < 0.01)
+				.filter(h => {
+					let test = hex.group.position.clone().add(h[0][0]).add(h[1][0]).add(h[0][0]);
+					if (this.realWorldHex(test).building !== Building.Spacer)
+						return false;
+					test.add(h[1][0]);
+					if (this.realWorldHex(test).building !== Building.Spacer)
+						return false;
+					test.sub(h[0][0]);
+					if (this.realWorldHex(test).building !== Building.Spacer)
+						return false;
+					return true;
+				}).map(h => {
+					const radius = (h[0][0].clone().add(h[1][0]));
+					return {
+						radius: radius,
+						center: this.realWorldHex(radius.add(hex.group.position)),
+					} as SuperHex
+				});
 
-					const hits = test.adjacents(distance).filter(h =>
-						(h.building === Building.Spacer));
-
-					const initialHits = hits.length;
-					if (initialHits < 4)
-						continue;
-
-
-					const crossHits = this.spacers[row][i].adjacents(distance)
-						.concat(this.spacers[row][j].adjacents(distance))
-						.filter(h => (h.building === Building.Spacer));
-
-					if (hits.filter(h => !crossHits.find(t => t === h)).length + 4 !== initialHits)
-						continue;
-
-					hexes[test.indexHash] = [distance, test];
-				}
+			for(const hex of newHexes){
+				this.superHexes[hex.center.indexHash] = hex;
 			}
 		}
-		return hexes;
+	}
+
+	realWorldHex(vector: Vector3): Hex {
+		const y = Math.round(vector.y / Hex.radius / 1.5);
+		const x = Math.round((vector.x / Hex.size -  Math.abs(y % 2 | 0)) / 2);
+		return this.hexes[Field.indexHash(new Vector2(x, y))];
 	}
 
 	private spacers: HexGroupMap = {};
 
 	modifySpacer(hex: Hex, add: boolean){
-		if (add){
-			if (this.spacers[`y${hex.coord.y}`] == null){
-				this.spacers[`y${hex.coord.y}`] = [];
-			}
-			this.spacers[`y${hex.coord.y}`].push(hex);
-
-			if (this.spacers[`x${hex.coord.x}`] == null){
-				this.spacers[`x${hex.coord.x}`] = [];
-			}
-			this.spacers[`x${hex.coord.x}`].push(hex);
-		}else{
-			if (this.spacers[`y${hex.coord.y}`] != null)
-				tryRemove(this.spacers[`y${hex.coord.y}`], hex);
-	
-			if (this.spacers[`x${hex.coord.x}`] != null)
-				tryRemove(this.spacers[`x${hex.coord.x}`], hex);
-		}
+		if (!add)
+			this.destroySuperHexes(hex);
 	}
 
 	build(building: Building, hex: Hex): any {
 		hex.building = building;
-		this.disaster(hex);
+		//this.disaster(hex);
 
 		for(const hex of this.hexArray){
 			if (hex.building === Building.Spacer)
@@ -217,10 +239,10 @@ export class Field {
 			hex.reinforced = false;
 		}
 
-		const hexes = this.getHexes();
-		for(const hex in hexes){
-			hexes[hex][1].reinforced = true;
-			for(const subject of this.adjacents(hexes[hex][1], hexes[hex][0])){
+		this.createSuperHexes(hex);
+		for(const hex in this.superHexes){
+			this.superHexes[hex].center.reinforced = true;
+			for(const subject of this.adjacents(this.superHexes[hex].center, this.superHexes[hex].radius.length() / Hex.radius / 2 + 1 | 0)){
 				subject.reinforced = true;
 			}
 		}
@@ -232,16 +254,3 @@ export class Field {
 		}
 	}
 }
-
-export interface Buildings{
-	[key: string]: number;
-}
-
-interface HexGroupMap{
-	[key: string]: Array<Hex>;
-}
-
-interface SuperHexMap{
-	[key: string]: [number, Hex];
-}
-
