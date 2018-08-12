@@ -17,7 +17,7 @@ export class Hex implements EventReceptor{
 	public static readonly circumscribedRadius: number = Math.sqrt(3) / 3 * Hex.radius * Hex.gapPercent;
 	private static readonly buildingPrice = [0, 1, 0];
 
-	public static readonly hoverGoodColor: Color = new Color(0x2222ff);
+	public static readonly hoverGoodColor: Color = new Color(0x2288ff);
 	public static readonly hoverBadColor: Color = new Color(0xff2222);
 
 	public static readonly hover: Mesh = new Mesh(
@@ -51,7 +51,7 @@ export class Hex implements EventReceptor{
 		if (this.building === Building.Origin)
 			return false;
 		if (this.reinforced){
-			if (this.building !== Building.Spacer)
+			// if (this.building !== Building.Spacer)
 				return false;
 		}
 		if (this.solidity < 1)
@@ -66,7 +66,7 @@ export class Hex implements EventReceptor{
 	public set reinforced(value: boolean) {
 		this._reinforced = value;
 		if (this._reinforced){
-			if(this.building === Building.None)
+			// if(this.building === Building.None)
 				this.warp = 0;
 			if(this.building === Building.Tear)
 				this.building = Building.None;
@@ -92,6 +92,7 @@ export class Hex implements EventReceptor{
 		if (this._building === Building.Spacer){
 			this.field.destroySuperHexes(this);
 			for(const triangle of this.triangles){
+				this.field.triangles--;
 				for(const vertex of triangle.hexes){
 					if (vertex !== this){
 						vertex.removeTriangle(triangle);
@@ -158,7 +159,7 @@ export class Hex implements EventReceptor{
 		this.group.add(this.mesh);
 		this.group.userData.eventReceptor = this;
 
-		if(Math.random() > 0.95)
+		if(Math.random() > 0.85)
 			this.building = Building.Tear;
 	}
 
@@ -237,6 +238,7 @@ export class Hex implements EventReceptor{
 
 	addTriangles(triangles: Array<Triangle>){
 		for (const triangle of triangles){
+			this.field.triangles++;
 			this.addTriangle(triangle);
 			for (const vertex of triangle.hexes){
 				if (vertex !== this)
@@ -303,6 +305,8 @@ export class Hex implements EventReceptor{
 		this.material.color = this.color;
 		if (game.clock && this.warp > 0){
 			this.warpMaterial.opacity = 0.20 + (Math.sin(Math.PI * (game.clock.elapsedTime) * 3) + 1) / 3;
+		}else{
+			this.warpMaterial.opacity = 0;
 		}
 	}
 

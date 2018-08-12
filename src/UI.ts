@@ -60,11 +60,13 @@ export class UI {
 		this.addEmail({
 			subject: "FWD: Uroboros Initiative",
 			sender: "Johan Andersson, Lead Researcher",
-			body: "We're working on a device we're calling the 'Spacer'.<br />\
+			body: "We're working on a device we're calling the <span style='color:purple'>'Spacer'</span>.<br />\
 				Field tests show some promise in spatially unstable environments, especially in multiples.<br />\
 				Left Click to place one down.<br />\
 				Triangular arrangements boost the power of each device in the triangle.<br />\
-				Hexagonal arrangements seem to provide additional stability during stress tests."
+				Hexagonal arrangements seem to provide additional stability during stress tests.<br /><br />\
+				EXERCISE CAUTION<br />\
+				Multiple <span style='color:purple'>'Spacers'</span> without arrangement cause strain on the fabric of space and cause warping!"
 		});
 
 		this.addEmail({

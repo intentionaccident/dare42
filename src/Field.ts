@@ -30,6 +30,7 @@ interface SuperHexMap{
 
 
 export class Field {
+	triangles: number = 0;
 	disaster(){
 		for (const warp of this.hexArray.filter(h => h.warp > 0)){
 			if (--warp.warp > 0)
@@ -38,8 +39,10 @@ export class Field {
 		}
 
 		const targets = this.hexArray.filter(h => h.vulnerable);
+		const boostCost = this.hexArray.filter(h => h.building === Building.Spacer && h.boost === 0).length + targets.length / 40;
+		console.log(boostCost);
 
-		for (let events = targets.length/40; events > 0; events--){
+		for (let events = boostCost; events > 0; events--){
 			const target = random(targets);
 			if (!target){
 				break;
@@ -51,7 +54,7 @@ export class Field {
 		if (!this.origin || this.origin.solidity < 1)
 			return;
 
-		for(let i = 0, level = 1; level < 50 && i > 0; level++){
+		for(let i = 1, level = 1; level < 50 && i > 0; level++){
 			const items = this.origin.adjacents(level).filter(h => h.vulnerable);
 			while(items.length){
 				const victim = random(items);
@@ -116,7 +119,7 @@ export class Field {
 					hex.solidity = 1;
 			}
 		}
-		const origin = random(center.adjacents(5));
+		const origin = random(center.adjacents(20));
 		if (origin){
 			origin.building = Building.Origin;
 			this.origin = origin;
