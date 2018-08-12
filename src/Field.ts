@@ -1,5 +1,5 @@
 import { Hex, Building } from './Hex';
-import { Vector2, Group, Raycaster, Vector3, Quaternion, Line, Geometry, LineBasicMaterial } from 'three';
+import { Vector2, Group, Raycaster, Vector3, Quaternion, Line, Geometry, LineBasicMaterial, WrapAroundEnding } from 'three';
 import { flatten, game, tryRemove, random, groupBy, crossMap } from './index';
 
 export interface HexMap{
@@ -30,12 +30,7 @@ interface SuperHexMap{
 
 
 export class Field {
-	private danger: number = 0;
-	disaster(untouchable: Hex){
-		// this.disasterCount--;
-		// if (this.disasterCount > 0)
-		// 	return;
-
+	disaster(){
 		for (const warp of this.hexArray.filter(h => h.warp > 0)){
 			if (--warp.warp > 0)
 				continue;
@@ -44,7 +39,7 @@ export class Field {
 
 		const targets = this.hexArray.filter(h => h.vulnerable);
 
-		for (let events = targets.length/60 + 1; events > 0; events--){
+		for (let events = targets.length/35 + 1; events > 0; events--){
 			const target = random(targets);
 			if (!target){
 				break;
@@ -53,9 +48,21 @@ export class Field {
 			tryRemove(targets, target);
 		}
 
-		// this.danger++;
+		if (!this.origin || this.origin.solidity < 1)
+			return;
 
-		this.disasterCount = 1;
+		for(let i = 2, level = 1; level < 50 && i > 0; level++){
+			const items = this.origin.adjacents(level).filter(h => h.building !== Building.Tear && h.building !== Building.Origin);
+			while(items.length){
+				const victim = random(items);
+				tryRemove(items, victim);
+				if(victim){
+					victim.building = Building.Tear;
+					if(--i <= 0)
+						break;
+				}
+			}
+		}
 	}
 
 	disasterCount: number = 3;
@@ -101,15 +108,19 @@ export class Field {
 		return this.hexes[Field.indexHash(new Vector2(x | 0, y | 0))];
 	}
 
+	origin: Hex;
+
 	public generate() {
 		const center = this.createHex(new Vector2());
 		for(let i = 1; i <= 50; i++){
 			for(const vector of center.adjacentVectors(i))
 				this.createHex(vector);
 		}
-		const origin = random(center.adjacents(30));
-		if (origin)
+		const origin = random(center.adjacents(15));
+		if (origin){
 			origin.building = Building.Origin;
+			this.origin = origin;
+		}
 	}
 
 	public adjacents(hex: Hex, distance = 1): Array<Hex>{
@@ -127,21 +138,16 @@ export class Field {
 			if (hex.building !== Building.None)
 				buildings.push(hex);
 
-			hex.solidity -= 0.2 * delta;
+			hex.solidity -= 0.5 * delta;
 		}
 
 		for(const building of buildings){
 			switch(building.building){
 				case Building.Spacer:{
-					building.solidity += 1 * delta;
+					building.solidity += 2 * delta;
 					for (const hex of this.adjacents(building, 2 + building.boost)){
-						hex.solidity += 1 * delta;
+						hex.solidity += 2 * delta;
 					}
-					break;
-				}case Building.Vacuum: {
-					const cost = Math.min(600 * delta, building.space);
-					game.space += cost;
-					building.space -= cost;
 					break;
 				}
 			}
@@ -240,7 +246,7 @@ export class Field {
 	build(building: Building, hex: Hex): any {
 		if(building != Building.None)
 			hex.building = building;
-		this.disaster(hex);
+		this.disaster();
 
 		for(const hex of this.hexArray){
 			hex.reinforced = false;

@@ -43,6 +43,8 @@ export class Hex implements EventReceptor{
 			return false;
 		if (this.building === Building.Tear)
 			return false;
+		if (this.building === Building.Origin)
+			return false;
 		if (this.reinforced && this.building !== Building.Spacer)
 			return false;
 		if (this.solidity < 1)
@@ -76,10 +78,6 @@ export class Hex implements EventReceptor{
 	public set building(value: Building) {
 		if (this._building === value)
 			return;
-
-		if (this._building === Building.Tear){
-			game.space++;
-		}
 
 		if (this._building === Building.Spacer){
 			this.field.destroySuperHexes(this);
@@ -135,7 +133,7 @@ export class Hex implements EventReceptor{
 		this.group.add(this.mesh);
 		this.group.userData.eventReceptor = this;
 
-		if(Math.random() > 0.95)
+		if(Math.random() > 0.92)
 			this.building = Building.Tear;
 	}
 
@@ -236,14 +234,11 @@ export class Hex implements EventReceptor{
 	private tryBuild(building: Building): boolean {
 		if (this.solidity < 0.9)
 			return false;
-		if (game.space < Hex.buildingPrice[building])
-			return false;
 		if (building === Building.Spacer && this.building === Building.Tear){
 			if (!this.field.getSuperHexes(this).length)
 				return;
 		} else if (this.building !== Building.None)
 			return false;
-		game.space -= Hex.buildingPrice[building];
 		this.field.build(building, this);
 		return true;
 	}

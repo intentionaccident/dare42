@@ -29,7 +29,6 @@ export class Game {
 	ui: UI;
 	hoverItem: EventReceptor | void;
 	clock: Clock;
-	space: number = 20;
 	constructor() { }
 	public init() {
 		this.body = $(`<div/>`);
@@ -61,8 +60,6 @@ export class Game {
 		this.field.generate();
 		this.scene.add(this.field.group);
 		this.clock = new Clock(true);
-
-		this.ui.spaceField.text(this.space);
 	}
 	private zoom: number = 20;
 	private readonly cameraRadiusLimit = Hex.size * 35 ;
@@ -138,7 +135,6 @@ export class Game {
 
 	onMouseUp(event: JQuery.Event<HTMLElement, null>): any {
 		this.drag = null;
-		// alert('test');
 	}
 
 	onClick(event: JQuery.Event<HTMLCanvasElement, null>){
@@ -159,7 +155,6 @@ export class Game {
 		const target = Math.min(40, Math.max(10, this.zoom+Math.min(5, realEvent.deltaY)));
 		if (target === this.zoom)
 			return;
-		console.log('test');
 		this.zoom = target;
 		this.updateCamera();
 	}
@@ -172,19 +167,11 @@ export class Game {
 
 	update(delta: number): any {
 		this.field.update(delta);
-		this.ui.spaceField.text(this.space | 0);
 		if (this.hoverItem)
 			this.hoverItem.update();
 	}
 
 	public start() {
 		this.animate();
-	}
-	
-	public buy(cost: number): boolean{
-		if (this.space < cost)
-			return false;
-		this.space -= cost;
-		return true;
 	}
 }
