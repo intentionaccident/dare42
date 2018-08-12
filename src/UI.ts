@@ -28,7 +28,7 @@ export class UI {
 					</div>
 					<div class="${styles.header}">
 						<div>To:</div>
-						<div>Ouroboros Staff Mailing List (27)</div>
+						<div>Uroboros Staff Mailing List (27)</div>
 					</div>
 					<div class="${styles.header}">
 						<div>From:</div>
@@ -48,15 +48,23 @@ export class UI {
 		this.canvas.append(this.email);
 
 		this.addEmail({
-			subject: "Test Title",
-			sender: "Automated Alert System",
-			body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+			subject: "FWD: Uroboros Initiative",
+			sender: "Johan Andersson, Lead Researcher",
+			body: "We're working on a device we're calling the 'Spacer'.<br />\
+				Field tests show some promise in spatially unstable environments, especially in multiples.<br />\
+				Left Click to place one down.<br />\
+				Triangular arrangements boost the power of each device in the triangle.<br />\
+				Hexagonal arrangements seem to provide additional stability during stress tests."
 		});
 
 		this.addEmail({
-			subject: "Test Title 2",
-			sender: "Automated System",
-			body: "consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+			subject: "ALERT: SPATIAL INSTABILITY",
+			sender: "Automated Alert Watchdog",
+			body: "ANOMALY DETECTED<br />\
+				Instability in spacetime detected around <span style='color:yellow'>Uroboros Testing Station EM-32.</span><br />\
+				Ongoing space manipulation projects are to be suspended.<br />\
+				All personel to evacuate immediately.<br />\
+				EOM"
 		});
 	}
 
@@ -79,7 +87,7 @@ export class UI {
 	showEmail(email: Email) {
 		this.email.find(`.${styles.title} > .${styles.text}`).text(email.subject);
 		this.email.find('.from').text(email.sender);
-		this.email.find('.' + styles.body).text(email.body);
+		this.email.find('.' + styles.body).html(email.body);
 		this.email.find('.' + styles.footer).find('.' + styles.selected).removeClass(styles.selected);
 		this.email.find('.' + styles.footer).children().filter((i, e) => $(e).text() === email.subject).addClass(styles.selected);
 		this.openEmail();
