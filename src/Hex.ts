@@ -191,7 +191,6 @@ export class Hex implements EventReceptor{
 
 	onMouseEnter(event: JQuery.Event<HTMLCanvasElement, null>) {
 		this.group.add(Hex.hover);
-		this.setText();
 		this.field.showLinks(this);
 	}
 
@@ -274,10 +273,5 @@ export class Hex implements EventReceptor{
 
 	public update(){
 		this.material.color = this.color;
-		this.setText();
-	}
-
-	private setText(){
-		game.ui.textBlock.text(`Reinforced: ${this.reinforced}; Solidity: ${this.solidity * 100 | 0}%; Building: ${Building[this.building]}, Warp ${this.warp}`)
 	}
 }
