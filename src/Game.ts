@@ -107,9 +107,10 @@ export class Game {
 			this.hoverItem.onMouseEnter(event);
 	}
 
-	
+	dragged: boolean = false;
 	moveCamera(event: JQuery.Event<HTMLElement, null>){
 		if (this.drag){
+			this.dragged = true;
 			const viewBox = this.viewBox;
 			const size = viewBox.getSize(new Vector2())
 			const newPosition = new Vector2(event.clientX, event.clientY);
@@ -135,7 +136,12 @@ export class Game {
 		this.drag = null;
 	}
 
-	onClick(event: JQuery.Event<HTMLCanvasElement, null>): any {
+	onClick(event: JQuery.Event<HTMLCanvasElement, null>){
+		if(this.dragged){
+			this.dragged = false;
+			return;
+		}
+
 		this.raycaster.setFromCamera(this.mouse(event), this.camera);
 
 		const eventReceptor = this.field.smash(this.raycaster);
